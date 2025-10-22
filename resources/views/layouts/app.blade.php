@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>@yield('title', 'VuelosYa - Tu mejor opción en viajes')</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/vuelos.css') }}">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .navbar-brand {
+            color: #0d6efd !important;
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+        .header-busqueda {
+            background: linear-gradient(90deg,#155DFC 0%, #9810FA 50%, #E60076 100%);
+            min-height: 60vh;
+        }
+    </style>
+</head>
+<body>
+    {{-- NAVBAR --}}
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{{ route('inicio') }}">VuelosYa</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu" aria-controls="menu" aria-expanded="false">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="menu">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link {{ request()->is('/') ? 'active' : '' }}" href="{{ route('inicio') }}">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Ofertas</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Contacto</a></li>
+
+                    @auth
+                        <li class="nav-item"><a class="nav-link" href="{{ route('admin.dashboard') }}">Panel</a></li>
+                        <li class="nav-item">
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button class="btn btn-link nav-link" type="submit">Salir</button>
+                            </form>
+                        </li>
+                    @else
+                        <li class="nav-item"><a class="nav-link" href="{{ route('login.form') }}">Iniciar sesión</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('register.form') }}">Registrarse</a></li>
+                    @endauth
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    {{-- CONTENIDO PRINCIPAL --}}
+    <main>
+        @yield('content')
+    </main>
+
+    {{-- FOOTER --}}
+    <footer class="text-center py-4 bg-light mt-5">
+        <small class="text-muted">© 2025 VuelosYa - Todos los derechos reservados</small>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

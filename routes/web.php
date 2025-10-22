@@ -8,36 +8,47 @@ use App\Http\Controllers\VueloController;
 use App\Http\Controllers\ReservaController;
 use App\Http\Controllers\PagoController;
 use App\Http\Controllers\TiqueteController;
+use App\Http\Controllers\HomeController;
 
 /*
 |--------------------------------------------------------------------------
 | RUTAS WEB
 |--------------------------------------------------------------------------
-| Aquí definimos todas las rutas principales del sistema de tiquetes.
-| Separadas por módulos: Autenticación, Administración, Usuarios, etc.
+| Rutas principales del sistema de tiquetes aéreos.
+| Incluye rutas públicas, autenticación, administración y módulos del usuario.
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', [AdminController::class, 'index'])->name('inicio');
-
+// =====================================================
+// 🔹 PÁGINA PRINCIPAL (Pública)
+// =====================================================
+Route::get('/', [VueloController::class, 'index'])->name('inicio');
+Route::get('/vuelos/buscar', [VueloController::class, 'buscar'])->name('vuelos.buscar');
 
 // =====================================================
-// AUTENTICACIÓN
+// 🔹 AUTENTICACIÓN
 // =====================================================
 Route::controller(AuthController::class)->group(function () {
-    // Formulario login y registro
-    Route::get('/login', 'loginForm')->name('login.form');
+    Route::get('/login', 'loginForm')->name('login.form')->middleware('guest');
     Route::post('/login', 'login')->name('login');
-    Route::get('/register', 'registerForm')->name('register.form');
+    Route::get('/register', 'registerForm')->name('register.form')->middleware('guest');
     Route::post('/register', 'register')->name('register');
-    Route::post('/logout', 'logout')->name('logout');
+    Route::post('/logout', 'logout')->name('logout')->middleware('auth');
 });
 
+// =====================================================
+// 🔹 ADMINISTRADOR (solo admin)
+// =====================================================
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->controller(AdminController::class)->group(function () {
+    Route::get('/dashboard', 'index')->name('admin.dashboard');
+    Route::get('/vuelos', 'vuelos')->name('admin.vuelos');
+    Route::get('/reportes', 'reportes')->name('admin.reportes');
+});
 
 // =====================================================
-// USUARIOS (solo para admin)
+// 🔹 USUARIOS (solo admin)
 // =====================================================
-Route::prefix('usuarios')->controller(UsuarioController::class)->group(function () {
+Route::middleware(['auth', 'role:admin'])->prefix('usuarios')->controller(UsuarioController::class)->group(function () {
     Route::get('/', 'index')->name('usuarios.index');
     Route::get('/crear', 'create')->name('usuarios.create');
     Route::post('/guardar', 'store')->name('usuarios.store');
@@ -46,37 +57,12 @@ Route::prefix('usuarios')->controller(UsuarioController::class)->group(function 
     Route::delete('/eliminar/{id}', 'destroy')->name('usuarios.destroy');
 });
 
-
 // =====================================================
-// ADMINISTRADOR (dashboard, reportes, gestión vuelos)
+// 🔹 RESERVAS (usuarios autenticados)
 // =====================================================
-Route::prefix('admin')->controller(AdminController::class)->group(function () {
-    Route::get('/dashboard', 'index')->name('admin.dashboard');
-    Route::get('/vuelos', 'vuelos')->name('admin.vuelos');
-    Route::get('/reportes', 'reportes')->name('admin.reportes');
-});
-
-
-// =====================================================
-// VUELOS
-// =====================================================
-Route::prefix('vuelos')->controller(VueloController::class)->group(function () {
-    Route::get('/', 'index')->name('vuelos.index');
-    Route::get('/crear', 'create')->name('vuelos.create');
-    Route::post('/guardar', 'store')->name('vuelos.store');
-    Route::get('/editar/{id}', 'edit')->name('vuelos.edit');
-    Route::put('/actualizar/{id}', 'update')->name('vuelos.update');
-    Route::delete('/eliminar/{id}', 'destroy')->name('vuelos.destroy');
-    Route::get('/buscar', 'buscar')->name('vuelos.buscar');
-});
-
-
-// =====================================================
-// RESERVAS
-// =====================================================
-Route::prefix('reservas')->controller(ReservaController::class)->group(function () {
+Route::middleware(['auth'])->prefix('reservas')->controller(ReservaController::class)->group(function () {
     Route::get('/', 'index')->name('reservas.index');
-    Route::get('/crear', 'create')->name('reservas.create');
+    Route::get('/crear/{vuelo}', 'create')->name('reservas.create');
     Route::post('/guardar', 'store')->name('reservas.store');
     Route::get('/ver/{id}', 'show')->name('reservas.show');
     Route::get('/editar/{id}', 'edit')->name('reservas.edit');
@@ -84,25 +70,30 @@ Route::prefix('reservas')->controller(ReservaController::class)->group(function 
     Route::delete('/eliminar/{id}', 'destroy')->name('reservas.destroy');
 });
 
-
 // =====================================================
-// PAGOS
+// 🔹 PAGOS (usuarios autenticados)
 // =====================================================
-Route::prefix('pagos')->controller(PagoController::class)->group(function () {
+Route::middleware(['auth'])->prefix('pagos')->controller(PagoController::class)->group(function () {
     Route::get('/', 'index')->name('pagos.index');
-    Route::get('/crear', 'create')->name('pagos.create');
+    Route::get('/crear/{reserva}', 'create')->name('pagos.create');
     Route::post('/guardar', 'store')->name('pagos.store');
     Route::get('/ver/{id}', 'show')->name('pagos.show');
     Route::delete('/eliminar/{id}', 'destroy')->name('pagos.destroy');
 });
 
-
 // =====================================================
-// TIQUETES
+// 🔹 TIQUETES (usuarios autenticados)
 // =====================================================
-Route::prefix('tiquetes')->controller(TiqueteController::class)->group(function () {
+Route::middleware(['auth'])->prefix('tiquetes')->controller(TiqueteController::class)->group(function () {
     Route::get('/', 'index')->name('tiquetes.index');
     Route::get('/generar/{reserva}', 'generar')->name('tiquetes.generar');
     Route::get('/ver/{id}', 'show')->name('tiquetes.show');
     Route::get('/descargar/{id}', 'descargar')->name('tiquetes.descargar');
+});
+
+// =====================================================
+// 🔹 RUTA GENÉRICA DE ERROR O REDIRECCIÓN
+// =====================================================
+Route::fallback(function () {
+    return redirect()->route('inicio');
 });
