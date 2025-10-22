@@ -12,7 +12,8 @@ class VueloController extends Controller
     public function index()
     {
         $lugares = Lugar::all();
-        return view('vuelos.buscar', compact('lugares'));
+        return view('index', compact('lugares'));
+
     }
 
     // Procesa la búsqueda
