@@ -12,7 +12,7 @@ class Usuario extends Authenticatable
 
     protected $table = 'usuarios';
     protected $primaryKey = 'id_usuario';
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $fillable = [
         'primer_apellido',
@@ -39,6 +39,12 @@ class Usuario extends Authenticatable
         'fecha_nacimiento' => 'date',
         'condicion_infante' => 'boolean'
     ];
+
+    // Especificar el campo para autenticación
+    public function getAuthIdentifierName()
+    {
+        return 'correo';
+    }
 
     // Relaciones
     public function rol()

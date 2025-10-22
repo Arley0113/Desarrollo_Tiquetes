@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
     {
         // Ejecutar seeders en orden de dependencias
         $this->call([
+            RolSeeder::class,
             LugaresSeeder::class,
             TipoViajeSeeder::class,
             PreciosSeeder::class,
