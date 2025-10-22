@@ -31,7 +31,7 @@
             {{ $vuelo->reembolsable ? ' | Reembolsable' : '' }}
             {{ $vuelo->directo ? ' | Directo' : '' }}
         </p>
-        <a href="#" class="btn btn-primary mt-3">Reservar este vuelo</a>
+        <a href="{{ route('reservas.create', $vuelo->id_vuelo) }}" class="btn btn-primary mt-3">Reservar este vuelo</a>
     </div>
 </div>
 @endsection

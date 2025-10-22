@@ -17,7 +17,7 @@
                             </h5>
                             <p class="text-muted mb-1">Fecha: {{ $vuelo->fecha_vuelo }}</p>
                             <p class="text-primary fw-bold">Desde ${{ number_format($vuelo->precio->valor, 0, ',', '.') }} COP</p>
-                            <a href="#" class="btn btn-outline-primary w-100">Reservar</a>
+                            <a href="{{ route('reservas.create', $vuelo->id_vuelo) }}" class="btn btn-outline-primary w-100">Reservar</a>
                         </div>
                     </div>
                 </div>

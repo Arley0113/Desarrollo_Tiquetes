@@ -60,12 +60,26 @@ Route::middleware(['auth', 'role:admin'])->prefix('usuarios')->controller(Usuari
 });
 
 // =====================================================
-// 🔹 RESERVAS (usuarios autenticados)
+// 🔹 RESERVAS
 // =====================================================
+// Ruta pública para iniciar reserva (sin autenticación)
+Route::get('/reservas/crear/{vuelo}', [ReservaController::class, 'create'])->name('reservas.create');
+
+// Rutas que requieren autenticación
 Route::middleware(['auth'])->prefix('reservas')->controller(ReservaController::class)->group(function () {
     Route::get('/', 'index')->name('reservas.index');
-    Route::get('/crear/{vuelo}', 'create')->name('reservas.create');
-    Route::post('/guardar', 'store')->name('reservas.store');
+    
+    // FLUJO COMPLETO DE RESERVA CON ASIENTOS
+    // Paso 2: Guardar pasajeros y redirigir a selección de asientos
+    Route::post('/pasajeros/guardar', 'guardarPasajeros')->name('reservas.pasajeros.guardar');
+    
+    // Paso 3: Mostrar mapa de selección de asientos
+    Route::get('/asientos/{vuelo}', 'seleccionarAsientos')->name('reservas.asientos.seleccionar');
+    
+    // Paso 4: Guardar asientos seleccionados y crear reserva final
+    Route::post('/asientos/{vuelo}', 'guardarAsientos')->name('reservas.asientos.guardar');
+    
+    // Otras rutas de reservas
     Route::get('/ver/{id}', 'show')->name('reservas.show');
     Route::get('/editar/{id}', 'edit')->name('reservas.edit');
     Route::put('/actualizar/{id}', 'update')->name('reservas.update');
