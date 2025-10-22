@@ -1,46 +1,108 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UsuarioController;
-use App\Http\Controllers\RolController;
 use App\Http\Controllers\VueloController;
 use App\Http\Controllers\ReservaController;
-use App\Http\Controllers\TiqueteController;
 use App\Http\Controllers\PagoController;
+use App\Http\Controllers\TiqueteController;
 
-// Ruta principal (puede apuntar al dashboard)
-Route::get('/', function () {
-    return view('welcome');
+/*
+|--------------------------------------------------------------------------
+| RUTAS WEB
+|--------------------------------------------------------------------------
+| Aquí definimos todas las rutas principales del sistema de tiquetes.
+| Separadas por módulos: Autenticación, Administración, Usuarios, etc.
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/', [AdminController::class, 'index'])->name('inicio');
+
+
+// =====================================================
+// AUTENTICACIÓN
+// =====================================================
+Route::controller(AuthController::class)->group(function () {
+    // Formulario login y registro
+    Route::get('/login', 'loginForm')->name('login.form');
+    Route::post('/login', 'login')->name('login');
+    Route::get('/register', 'registerForm')->name('register.form');
+    Route::post('/register', 'register')->name('register');
+    Route::post('/logout', 'logout')->name('logout');
 });
 
-// === MÓDULO USUARIOS ===
-Route::prefix('usuarios')->group(function () {
-    Route::get('/', [UsuarioController::class, 'index'])->name('usuarios.index');
-    Route::get('/create', [UsuarioController::class, 'create'])->name('usuarios.create');
-    Route::post('/store', [UsuarioController::class, 'store'])->name('usuarios.store');
-    Route::get('/edit/{id}', [UsuarioController::class, 'edit'])->name('usuarios.edit');
-    Route::put('/update/{id}', [UsuarioController::class, 'update'])->name('usuarios.update');
-    Route::delete('/delete/{id}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
+
+// =====================================================
+// USUARIOS (solo para admin)
+// =====================================================
+Route::prefix('usuarios')->controller(UsuarioController::class)->group(function () {
+    Route::get('/', 'index')->name('usuarios.index');
+    Route::get('/crear', 'create')->name('usuarios.create');
+    Route::post('/guardar', 'store')->name('usuarios.store');
+    Route::get('/editar/{id}', 'edit')->name('usuarios.edit');
+    Route::put('/actualizar/{id}', 'update')->name('usuarios.update');
+    Route::delete('/eliminar/{id}', 'destroy')->name('usuarios.destroy');
 });
 
-// === MÓDULO ROLES ===
-Route::prefix('roles')->group(function () {
-    Route::get('/', [RolController::class, 'index'])->name('roles.index');
-    Route::get('/create', [RolController::class, 'create'])->name('roles.create');
-    Route::post('/store', [RolController::class, 'store'])->name('roles.store');
-    Route::get('/edit/{id}', [RolController::class, 'edit'])->name('roles.edit');
-    Route::put('/update/{id}', [RolController::class, 'update'])->name('roles.update');
-    Route::delete('/delete/{id}', [RolController::class, 'destroy'])->name('roles.destroy');
+
+// =====================================================
+// ADMINISTRADOR (dashboard, reportes, gestión vuelos)
+// =====================================================
+Route::prefix('admin')->controller(AdminController::class)->group(function () {
+    Route::get('/dashboard', 'index')->name('admin.dashboard');
+    Route::get('/vuelos', 'vuelos')->name('admin.vuelos');
+    Route::get('/reportes', 'reportes')->name('admin.reportes');
 });
 
-// === MÓDULO VUELOS ===
-Route::resource('vuelos', VueloController::class);
 
-// === MÓDULO RESERVAS ===
-Route::resource('reservas', ReservaController::class);
+// =====================================================
+// VUELOS
+// =====================================================
+Route::prefix('vuelos')->controller(VueloController::class)->group(function () {
+    Route::get('/', 'index')->name('vuelos.index');
+    Route::get('/crear', 'create')->name('vuelos.create');
+    Route::post('/guardar', 'store')->name('vuelos.store');
+    Route::get('/editar/{id}', 'edit')->name('vuelos.edit');
+    Route::put('/actualizar/{id}', 'update')->name('vuelos.update');
+    Route::delete('/eliminar/{id}', 'destroy')->name('vuelos.destroy');
+    Route::get('/buscar', 'buscar')->name('vuelos.buscar');
+});
 
-// === MÓDULO TIQUETES ===
-Route::resource('tiquetes', TiqueteController::class);
 
-// === MÓDULO PAGOS ===
-Route::resource('pagos', PagoController::class);
+// =====================================================
+// RESERVAS
+// =====================================================
+Route::prefix('reservas')->controller(ReservaController::class)->group(function () {
+    Route::get('/', 'index')->name('reservas.index');
+    Route::get('/crear', 'create')->name('reservas.create');
+    Route::post('/guardar', 'store')->name('reservas.store');
+    Route::get('/ver/{id}', 'show')->name('reservas.show');
+    Route::get('/editar/{id}', 'edit')->name('reservas.edit');
+    Route::put('/actualizar/{id}', 'update')->name('reservas.update');
+    Route::delete('/eliminar/{id}', 'destroy')->name('reservas.destroy');
+});
+
+
+// =====================================================
+// PAGOS
+// =====================================================
+Route::prefix('pagos')->controller(PagoController::class)->group(function () {
+    Route::get('/', 'index')->name('pagos.index');
+    Route::get('/crear', 'create')->name('pagos.create');
+    Route::post('/guardar', 'store')->name('pagos.store');
+    Route::get('/ver/{id}', 'show')->name('pagos.show');
+    Route::delete('/eliminar/{id}', 'destroy')->name('pagos.destroy');
+});
+
+
+// =====================================================
+// TIQUETES
+// =====================================================
+Route::prefix('tiquetes')->controller(TiqueteController::class)->group(function () {
+    Route::get('/', 'index')->name('tiquetes.index');
+    Route::get('/generar/{reserva}', 'generar')->name('tiquetes.generar');
+    Route::get('/ver/{id}', 'show')->name('tiquetes.show');
+    Route::get('/descargar/{id}', 'descargar')->name('tiquetes.descargar');
+});
