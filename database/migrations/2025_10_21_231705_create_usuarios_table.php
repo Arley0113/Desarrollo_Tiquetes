@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('segundo_apellido', 50)->nullable();
             $table->string('nombres', 100);
             $table->date('fecha_nacimiento')->nullable();
-            $table->enum('genero', ['M', 'F', 'Otro'])->nullable();
+            $table->enum('genero', ['Masculino', 'Femenino', 'Otro'])->nullable();
             $table->string('tipo_documento', 20)->nullable();
             $table->string('documento', 30)->unique();
             $table->boolean('condicion_infante')->nullable();
