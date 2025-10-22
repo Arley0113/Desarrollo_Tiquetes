@@ -3,165 +3,896 @@
 @section('title', 'Vuelos de ' . $origen->nombre_lugar . ' a ' . $destino->nombre_lugar)
 
 @section('content')
-<div class="container-fluid p-4">
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="fw-bold">{{ $origen->nombre_lugar }} → {{ $destino->nombre_lugar }}</h4>
-        <span class="badge bg-success">{{ $vuelos->count() }} vuelos disponibles</span>
+<div class="flight-search-container">
+    <!-- Header Section -->
+    <div class="search-header">
+        <div class="container">
+            <div class="search-info">
+                <div class="route-info">
+                    <div class="airport-info">
+                        <div class="airport-code">{{ substr($origen->nombre_lugar, 0, 3) }}</div>
+                        <div class="airport-name">{{ $origen->nombre_lugar }}</div>
+                    </div>
+                    <div class="flight-path">
+                        <i class="bi bi-airplane"></i>
+                        <div class="flight-line"></div>
+                    </div>
+                    <div class="airport-info">
+                        <div class="airport-code">{{ substr($destino->nombre_lugar, 0, 3) }}</div>
+                        <div class="airport-name">{{ $destino->nombre_lugar }}</div>
     </div>
-
-    <div class="row">
-        <div class="col-md-3">
-            <div class="card shadow-sm p-3 mb-4">
-                <h6 class="fw-bold mb-3">Filtros de Búsqueda</h6>
-                
-                {{-- Rango de Precio --}}
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Rango de Precio</label>
-                    <input type="range" class="form-range" min="0" max="{{ $precioMaximo }}" id="rangoPrecio" value="{{ $precioMaximo }}">
-                    <div class="d-flex justify-content-between mt-1">
-                        <span id="precioMinimo">$0</span>
-                        <span id="precioMaximo">${{ number_format($precioMaximo, 0, ',', '.') }}</span>
-                    </div>
-                    <div class="text-center mt-2">
-                        <span class="badge bg-primary" id="precioActual">Hasta ${{ number_format($precioMaximo, 0, ',', '.') }}</span>
-                    </div>
                 </div>
-
-                <hr>
-                
-                {{-- Tipo de Vuelo --}}
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Tipo de Vuelo</label>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="vuelosDirectos" checked>
-                        <label class="form-check-label" for="vuelosDirectos">Solo vuelos directos</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="vuelosConEscala">
-                        <label class="form-check-label" for="vuelosConEscala">Vuelos con escala</label>
-                    </div>
+                <div class="search-details">
+                    <div class="date-info">
+                        <i class="bi bi-calendar"></i>
+                        <span>{{ date('d M Y', strtotime($request->fecha)) }}</span>
                 </div>
-
-                {{-- Comodidades --}}
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Comodidades</label>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="wifi">
-                        <label class="form-check-label" for="wifi">WiFi disponible</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="reembolsable">
-                        <label class="form-check-label" for="reembolsable">Reembolsable</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="asientosDisponibles">
-                        <label class="form-check-label" for="asientosDisponibles">Con asientos disponibles</label>
-                    </div>
+                    <div class="results-count">
+                        <span class="badge">{{ $vuelos->count() }} vuelos encontrados</span>
                 </div>
-
-                {{-- Ordenar por --}}
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Ordenar por</label>
-                    <select class="form-select" id="ordenarPor">
-                        <option value="precio">Precio (menor a mayor)</option>
-                        <option value="precio-desc">Precio (mayor a menor)</option>
-                        <option value="hora">Hora de salida</option>
-                        <option value="duracion">Duración</option>
-                    </select>
                 </div>
-
-                <button class="btn btn-outline-secondary w-100 mt-3" id="limpiarFiltros">Limpiar Filtros</button>
             </div>
         </div>
+    </div>
 
-        <div class="col-md-9">
-            {{-- Contador de resultados --}}
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0">Resultados encontrados: <span id="contadorResultados">{{ $vuelos->count() }}</span></h5>
-                <div class="text-muted">
-                    <small>Mostrando vuelos para {{ $request->fecha }}</small>
-                </div>
-            </div>
-
-            {{-- Lista de vuelos --}}
-            <div id="lista-vuelos">
-                @foreach ($vuelos as $vuelo)
-                    <div class="card vuelo shadow-sm p-3 mb-3" 
-                         data-precio="{{ $vuelo->precio->precio_ida ?? 0 }}" 
-                         data-directo="{{ $vuelo->directo ? 'true' : 'false' }}" 
-                         data-wifi="{{ $vuelo->wifi ? 'true' : 'false' }}" 
-                         data-reembolsable="{{ $vuelo->reembolsable ? 'true' : 'false' }}"
-                         data-hora="{{ $vuelo->hora }}"
-                         data-duracion="{{ $vuelo->duracion ?? '2h 30m' }}"
-                         data-asientos-disponibles="{{ $vuelo->asientosDisponibles() ?? 0 }}">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center">
-                                <div class="icono me-3">
-                                    <i class="bi bi-airplane fs-4 text-primary"></i>
+    <div class="container">
+        <div class="row">
+            <!-- Filters Sidebar -->
+            <div class="col-lg-3">
+                <div class="filters-sidebar">
+                    <div class="filter-section">
+                        <h5 class="filter-title">
+                            <i class="bi bi-funnel"></i>
+                            Filtros
+                        </h5>
+                        
+                        <!-- Price Range -->
+                        <div class="filter-group">
+                            <label class="filter-label">Rango de Precio</label>
+                            <div class="price-range-container">
+                                <input type="range" class="price-range" min="0" max="{{ $precioMaximo }}" id="rangoPrecio" value="{{ $precioMaximo }}">
+                                <div class="price-labels">
+                                    <span class="price-min">$0</span>
+                                    <span class="price-max">${{ number_format($precioMaximo, 0, ',', '.') }}</span>
                                 </div>
-                                <div>
-                                    <h6 class="fw-bold mb-1">{{ $vuelo->avion->nombre ?? 'Aerolínea' }}</h6>
-                                    <small class="text-muted">{{ $vuelo->codigo_vuelo ?? 'XX0000' }}</small>
-                                    <div class="mt-1">
-                                        @if($vuelo->wifi)
-                                            <span class="badge bg-success me-1">WiFi</span>
-                                        @endif
-                                        @if($vuelo->reembolsable)
-                                            <span class="badge bg-info me-1">Reembolsable</span>
-                                        @endif
-                                        @if($vuelo->directo)
-                                            <span class="badge bg-warning">Directo</span>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="text-center">
-                                <h6 class="fw-bold">{{ date('H:i', strtotime($vuelo->hora)) }}</h6>
-                                <small class="text-muted">{{ $origen->nombre_lugar }}</small>
-                            </div>
-                            <div class="text-center">
-                                <small class="text-muted">{{ $vuelo->duracion ?? '2h 30m' }}</small>
-                                <div class="mt-1">
-                                    @if($vuelo->directo)
-                                        <i class="bi bi-arrow-right text-success"></i>
-                                    @else
-                                        <i class="bi bi-arrow-right text-warning"></i>
-                                        <small class="text-warning">Con escala</small>
-                                    @endif
-                                </div>
-                            </div>
-                            <div class="text-center">
-                                <h6 class="fw-bold">{{ date('H:i', strtotime($vuelo->hora_llegada ?? $vuelo->hora)) }}</h6>
-                                <small class="text-muted">{{ $destino->nombre_lugar }}</small>
-                            </div>
-                            <div class="text-end">
-                                <h5 class="fw-bold text-primary">${{ number_format($vuelo->precio->precio_ida ?? 0, 0, ',', '.') }}</h5>
-                                <small class="text-muted">{{ $vuelo->asientosDisponibles() ?? 0 }} asientos disponibles</small>
-                                <div class="mt-2">
-                                    <a href="{{ route('vuelo.mostrar', $vuelo->id) }}" class="btn btn-primary btn-sm">Seleccionar</a>
+                                <div class="current-price">
+                                    <span class="price-display">Hasta ${{ number_format($precioMaximo, 0, ',', '.') }}</span>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Flight Type -->
+                        <div class="filter-group">
+                            <label class="filter-label">Tipo de Vuelo</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="vuelosDirectos" checked>
+                                    <span class="checkmark"></span>
+                                    <span class="checkbox-text">Solo vuelos directos</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="vuelosConEscala">
+                                    <span class="checkmark"></span>
+                                    <span class="checkbox-text">Vuelos con escala</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Amenities -->
+                        <div class="filter-group">
+                            <label class="filter-label">Comodidades</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="wifi">
+                                    <span class="checkmark"></span>
+                                    <span class="checkbox-text">WiFi disponible</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="reembolsable">
+                                    <span class="checkmark"></span>
+                                    <span class="checkbox-text">Reembolsable</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="asientosDisponibles">
+                                    <span class="checkmark"></span>
+                                    <span class="checkbox-text">Con asientos disponibles</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Sort Options -->
+                        <div class="filter-group">
+                            <label class="filter-label">Ordenar por</label>
+                            <select class="sort-select" id="ordenarPor">
+                                <option value="precio">Precio (menor a mayor)</option>
+                                <option value="precio-desc">Precio (mayor a menor)</option>
+                                <option value="hora">Hora de salida</option>
+                                <option value="duracion">Duración</option>
+                            </select>
+                        </div>
+
+                        <button class="clear-filters-btn" id="limpiarFiltros">
+                            <i class="bi bi-arrow-clockwise"></i>
+                            Limpiar Filtros
+                        </button>
                     </div>
-                @endforeach
+                </div>
             </div>
 
-            {{-- Mensaje cuando no hay resultados --}}
-            <div id="sin-resultados" class="text-center py-5" style="display: none;">
-                <i class="bi bi-search fs-1 text-muted"></i>
-                <h5 class="text-muted mt-3">No se encontraron vuelos</h5>
-                <p class="text-muted">Intenta ajustar los filtros para ver más resultados</p>
+            <!-- Results Section -->
+            <div class="col-lg-9">
+                <div class="results-section">
+                    <!-- Results Header -->
+                    <div class="results-header">
+                        <div class="results-info">
+                            <h4 class="results-title">
+                                <i class="bi bi-list-ul"></i>
+                                Resultados de búsqueda
+                            </h4>
+                            <div class="results-count">
+                                <span id="contadorResultados">{{ $vuelos->count() }}</span> vuelos disponibles
+                            </div>
+                        </div>
+                        <div class="view-options">
+                            <button class="view-btn active" data-view="list">
+                                <i class="bi bi-list"></i>
+                            </button>
+                            <button class="view-btn" data-view="grid">
+                                <i class="bi bi-grid"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Flight Results -->
+                    <div class="flights-container" id="lista-vuelos">
+                        @if($vuelos->isEmpty())
+                            <div class="no-results">
+                                <div class="no-results-content">
+                                    <i class="bi bi-search"></i>
+                                    <h5>No se encontraron vuelos</h5>
+                                    <p>No hay vuelos disponibles para la ruta {{ $origen->nombre_lugar }} → {{ $destino->nombre_lugar }} en la fecha seleccionada.</p>
+                                    <div class="suggestions">
+                                        <p><strong>Sugerencias:</strong></p>
+                                        <ul>
+                                            <li>Intenta con una fecha diferente</li>
+                                            <li>Verifica que el origen y destino sean diferentes</li>
+                                            <li>Busca vuelos en fechas cercanas</li>
+                                        </ul>
+                                    </div>
+                                    <a href="{{ route('inicio') }}" class="btn btn-primary">
+                                        <i class="bi bi-arrow-left"></i>
+                                        Nueva Búsqueda
+                                    </a>
+                                </div>
+                            </div>
+                        @else
+                            @foreach ($vuelos as $vuelo)
+                            <div class="flight-card" 
+                                 data-precio="{{ $vuelo->precio->precio_ida ?? 0 }}" 
+                                 data-directo="{{ $vuelo->directo ? 'true' : 'false' }}" 
+                                 data-wifi="{{ $vuelo->wifi ? 'true' : 'false' }}" 
+                                 data-reembolsable="{{ $vuelo->reembolsable ? 'true' : 'false' }}"
+                                 data-hora="{{ $vuelo->hora }}"
+                                 data-duracion="{{ $vuelo->duracion ?? '2h 30m' }}"
+                                 data-asientos-disponibles="{{ $vuelo->asientosDisponibles() ?? 0 }}">
+                                
+                                <div class="flight-main">
+                                    <!-- Airline Info -->
+                                    <div class="airline-section">
+                                        <div class="airline-logo">
+                                            <i class="bi bi-airplane-fill"></i>
+                                        </div>
+                                        <div class="airline-info">
+                                            <div class="airline-name">{{ $vuelo->avion->nombre ?? 'Aerolínea' }}</div>
+                                            <div class="flight-code">{{ $vuelo->codigo_vuelo ?? 'XX0000' }}</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Flight Times -->
+                                    <div class="flight-times">
+                                        <div class="time-section">
+                                            <div class="time">{{ date('H:i', strtotime($vuelo->hora)) }}</div>
+                                            <div class="airport">{{ $origen->nombre_lugar }}</div>
+                                        </div>
+                                        <div class="flight-duration">
+                                            <div class="duration">{{ $vuelo->duracion ?? '2h 30m' }}</div>
+                                            <div class="flight-path">
+                                                @if($vuelo->directo)
+                                                    <i class="bi bi-arrow-right text-success"></i>
+                                                    <span class="direct-label">Directo</span>
+                                                @else
+                                                    <i class="bi bi-arrow-right text-warning"></i>
+                                                    <span class="stop-label">Con escala</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <div class="time-section">
+                                            <div class="time">{{ date('H:i', strtotime($vuelo->hora_llegada ?? $vuelo->hora)) }}</div>
+                                            <div class="airport">{{ $destino->nombre_lugar }}</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Price and Action -->
+                                    <div class="price-section">
+                                        <div class="price-info">
+                                            <div class="price">${{ number_format($vuelo->precio->precio_ida ?? 0, 0, ',', '.') }}</div>
+                                            <div class="price-per">por persona</div>
+                                            <div class="seats-available">{{ $vuelo->asientosDisponibles() ?? 0 }} asientos disponibles</div>
+                                        </div>
+                                        <a href="{{ route('vuelo.mostrar', $vuelo->id_vuelo) }}" class="select-btn">
+                                            <i class="bi bi-arrow-right"></i>
+                                            Seleccionar
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <!-- Flight Features -->
+                                <div class="flight-features">
+                                    @if($vuelo->wifi)
+                                        <span class="feature-badge wifi">
+                                            <i class="bi bi-wifi"></i>
+                                            WiFi
+                                        </span>
+                                    @endif
+                                    @if($vuelo->reembolsable)
+                                        <span class="feature-badge refundable">
+                                            <i class="bi bi-arrow-clockwise"></i>
+                                            Reembolsable
+                                        </span>
+                                    @endif
+                                    @if($vuelo->directo)
+                                        <span class="feature-badge direct">
+                                            <i class="bi bi-arrow-right"></i>
+                                            Directo
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                            @endforeach
+                        @endif
+                    </div>
+
+                    <!-- No Results Message -->
+                    <div id="sin-resultados" class="no-results" style="display: none;">
+                        <div class="no-results-content">
+                            <i class="bi bi-search"></i>
+                            <h5>No se encontraron vuelos</h5>
+                            <p>Intenta ajustar los filtros para ver más resultados</p>
+                            <button class="btn btn-primary" onclick="document.getElementById('limpiarFiltros').click()">
+                                Limpiar Filtros
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+@endsection
 
+@push('styles')
+<style>
+/* Flight Search Container */
+.flight-search-container {
+    background: #f8fafc;
+    min-height: 100vh;
+    padding-top: 2rem;
+}
+
+/* Search Header */
+.search-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+}
+
+.search-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.route-info {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.airport-info {
+    text-align: center;
+}
+
+.airport-code {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.airport-name {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.flight-path {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.flight-path i {
+    font-size: 1.5rem;
+}
+
+.flight-line {
+    width: 60px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.search-details {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.date-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.results-count .badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+}
+
+/* Filters Sidebar */
+.filters-sidebar {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    position: sticky;
+    top: 2rem;
+}
+
+.filter-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.filter-group {
+    margin-bottom: 1.5rem;
+}
+
+.filter-label {
+    display: block;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+}
+
+/* Price Range */
+.price-range-container {
+    background: #f7fafc;
+    padding: 1rem;
+    border-radius: 12px;
+}
+
+.price-range {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #e2e8f0;
+    outline: none;
+    -webkit-appearance: none;
+    margin-bottom: 0.75rem;
+}
+
+.price-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #667eea;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.price-range::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #667eea;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.price-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #718096;
+    margin-bottom: 0.5rem;
+}
+
+.current-price {
+    text-align: center;
+}
+
+.price-display {
+    background: #667eea;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Checkbox Group */
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.checkbox-item:hover {
+    background: #f7fafc;
+}
+
+.checkbox-item input[type="checkbox"] {
+    display: none;
+}
+
+.checkmark {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #cbd5e0;
+    border-radius: 4px;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.checkbox-item input[type="checkbox"]:checked + .checkmark {
+    background: #667eea;
+    border-color: #667eea;
+}
+
+.checkbox-item input[type="checkbox"]:checked + .checkmark::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.checkbox-text {
+    font-size: 0.9rem;
+    color: #4a5568;
+}
+
+/* Sort Select */
+.sort-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    color: #4a5568;
+    font-size: 0.9rem;
+    transition: border-color 0.2s;
+}
+
+.sort-select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+/* Clear Filters Button */
+.clear-filters-btn {
+    width: 100%;
+    background: #f7fafc;
+    border: 2px solid #e2e8f0;
+    color: #4a5568;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.clear-filters-btn:hover {
+    background: #edf2f7;
+    border-color: #cbd5e0;
+}
+
+/* Results Section */
+.results-section {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.results-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0;
+}
+
+.results-count {
+    color: #718096;
+    font-size: 0.9rem;
+}
+
+.view-options {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.view-btn {
+    width: 40px;
+    height: 40px;
+    border: 2px solid #e2e8f0;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.view-btn.active,
+.view-btn:hover {
+    border-color: #667eea;
+    background: #667eea;
+    color: white;
+}
+
+/* Flight Cards */
+.flights-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.flight-card {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.flight-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+    transform: translateY(-2px);
+}
+
+.flight-main {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    gap: 2rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+/* Airline Section */
+.airline-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.airline-logo {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.airline-name {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.25rem;
+}
+
+.flight-code {
+    font-size: 0.8rem;
+    color: #718096;
+}
+
+/* Flight Times */
+.flight-times {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 1rem;
+    align-items: center;
+}
+
+.time-section {
+    text-align: center;
+}
+
+.time {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 0.25rem;
+}
+
+.airport {
+    font-size: 0.9rem;
+    color: #718096;
+}
+
+.flight-duration {
+    text-align: center;
+}
+
+.duration {
+    font-size: 0.9rem;
+    color: #4a5568;
+    margin-bottom: 0.5rem;
+}
+
+.flight-path {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.direct-label,
+.stop-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.direct-label {
+    color: #38a169;
+}
+
+.stop-label {
+    color: #d69e2e;
+}
+
+/* Price Section */
+.price-section {
+    text-align: right;
+}
+
+.price-info {
+    margin-bottom: 1rem;
+}
+
+.price {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 0.25rem;
+}
+
+.price-per {
+    font-size: 0.8rem;
+    color: #718096;
+    margin-bottom: 0.5rem;
+}
+
+.seats-available {
+    font-size: 0.8rem;
+    color: #38a169;
+    font-weight: 600;
+}
+
+.select-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.select-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+/* Flight Features */
+.flight-features {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.feature-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.feature-badge.wifi {
+    background: #e6fffa;
+    color: #38a169;
+}
+
+.feature-badge.refundable {
+    background: #fef5e7;
+    color: #d69e2e;
+}
+
+.feature-badge.direct {
+    background: #f0fff4;
+    color: #38a169;
+}
+
+/* No Results */
+.no-results {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.no-results-content i {
+    font-size: 4rem;
+    color: #cbd5e0;
+    margin-bottom: 1rem;
+}
+
+.no-results-content h5 {
+    color: #4a5568;
+    margin-bottom: 0.5rem;
+}
+
+.no-results-content p {
+    color: #718096;
+    margin-bottom: 1.5rem;
+}
+
+.suggestions {
+    background: #f7fafc;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin: 1.5rem 0;
+    text-align: left;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.suggestions p {
+    color: #4a5568;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.suggestions ul {
+    color: #718096;
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.suggestions li {
+    margin-bottom: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .flight-main {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .flight-times {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    
+    .price-section {
+        text-align: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .search-info {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .route-info {
+        gap: 1rem;
+    }
+    
+    .search-details {
+        gap: 1rem;
+    }
+    
+    .results-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .filters-sidebar {
+        position: static;
+        margin-bottom: 2rem;
+    }
+}
+</style>
+@endpush
+
+@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const vuelos = document.querySelectorAll('.vuelo');
+    const vuelos = document.querySelectorAll('.flight-card');
     const rangoPrecio = document.getElementById('rangoPrecio');
-    const precioActual = document.getElementById('precioActual');
+    const precioDisplay = document.querySelector('.price-display');
     const contadorResultados = document.getElementById('contadorResultados');
     const listaVuelos = document.getElementById('lista-vuelos');
     const sinResultados = document.getElementById('sin-resultados');
@@ -250,7 +981,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Event listeners
     rangoPrecio.addEventListener('input', function() {
-        precioActual.textContent = `Hasta $${parseInt(this.value).toLocaleString()}`;
+        precioDisplay.textContent = `Hasta $${parseInt(this.value).toLocaleString()}`;
         filtrarVuelos();
     });
     
@@ -264,12 +995,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Limpiar filtros
     document.getElementById('limpiarFiltros').addEventListener('click', function() {
         // Resetear checkboxes
-        document.querySelectorAll('.form-check-input').forEach(cb => cb.checked = false);
-        document.getElementById('vuelosDirectos').checked = true; // Mantener vuelos directos por defecto
+        document.querySelectorAll('.checkbox-item input[type="checkbox"]').forEach(cb => cb.checked = false);
+        document.getElementById('vuelosDirectos').checked = true;
         
         // Resetear rango de precio
         rangoPrecio.value = precioMaximo;
-        precioActual.textContent = `Hasta $${precioMaximo.toLocaleString()}`;
+        precioDisplay.textContent = `Hasta $${precioMaximo.toLocaleString()}`;
         
         // Resetear ordenamiento
         document.getElementById('ordenarPor').value = 'precio';
@@ -282,4 +1013,4 @@ document.addEventListener('DOMContentLoaded', function() {
     filtrarVuelos();
 });
 </script>
-@endsection
+@endpush

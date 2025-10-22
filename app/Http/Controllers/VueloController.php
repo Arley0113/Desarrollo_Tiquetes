@@ -27,11 +27,20 @@ class VueloController extends Controller
         'fecha' => 'required|date'
     ]);
 
+    // Buscar vuelos para la fecha específica
     $vuelos = Vuelo::with(['origen', 'destino', 'avion', 'precio'])
         ->whereDate('fecha_vuelo', $request->fecha)
         ->where('id_origen', $request->origen)
         ->where('id_destino', $request->destino)
         ->get();
+
+    // Si no hay vuelos para esa fecha específica, buscar vuelos para cualquier fecha entre origen y destino
+    if ($vuelos->isEmpty()) {
+        $vuelos = Vuelo::with(['origen', 'destino', 'avion', 'precio'])
+            ->where('id_origen', $request->origen)
+            ->where('id_destino', $request->destino)
+            ->get();
+    }
 
     $origen = Lugar::find($request->origen);
     $destino = Lugar::find($request->destino);

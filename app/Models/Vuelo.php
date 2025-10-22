@@ -66,9 +66,13 @@ class Vuelo extends Model
     // Métodos helper
     public function asientosDisponibles()
     {
-        $capacidad = $this->avion->capacidad;
+        if (!$this->avion) {
+            return 0;
+        }
+        
+        $capacidad = $this->avion->capacidad ?? 0;
         $ocupados = $this->tiquetes()->count();
-        return $capacidad - $ocupados;
+        return max(0, $capacidad - $ocupados);
     }
 
     public function estaDisponible()
