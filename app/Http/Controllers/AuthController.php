@@ -10,17 +10,13 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    /** 
-     * Mostrar formulario de inicio de sesión 
-     */
+    // Mostrar formulario de login
     public function loginForm()
     {
         return view('auth.login');
     }
 
-    /**
-     * Procesar inicio de sesión
-     */
+    // Procesar login
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -36,56 +32,40 @@ class AuthController extends Controller
         return back()->withErrors(['correo' => 'Credenciales inválidas'])->onlyInput('correo');
     }
 
-    /**
-     * Mostrar formulario de registro
-     */
+    // Mostrar formulario de registro
     public function registerForm()
     {
         $roles = Rol::all();
         return view('auth.register', compact('roles'));
     }
 
-    /**
-     * Procesar registro de usuario
-     */
+    // Procesar registro
     public function register(Request $request)
     {
         $request->validate([
-            'nombres'           => 'required|string|max:100',
-            'primer_apellido'   => 'required|string|max:50',
-            'segundo_apellido'  => 'nullable|string|max:50',
-            'fecha_nacimiento'  => 'required|date',
-            'genero'            => 'required|string|max:20',
-            'tipo_documento'    => 'required|string|max:10',
-            'documento'         => 'required|string|max:30|unique:usuarios,documento',
-            'celular'           => 'required|string|max:15',
-            'correo'            => 'required|email|unique:usuarios,correo',
-            'password'          => 'required|confirmed|min:6',
-            'id_rol'            => 'required|exists:rol,id_rol',
+            'nombres' => 'required|string|max:100',
+            'primer_apellido' => 'required|string|max:50',
+            'correo' => 'required|email|unique:usuarios,correo',
+            'documento' => 'required|unique:usuarios,documento',
+            'password' => 'required|confirmed|min:6',
+            'id_rol' => 'required|exists:rol,id_rol',
         ]);
 
         $usuario = Usuario::create([
-            'nombres'           => $request->nombres,
-            'primer_apellido'   => $request->primer_apellido,
-            'segundo_apellido'  => $request->segundo_apellido,
-            'fecha_nacimiento'  => $request->fecha_nacimiento,
-            'genero'            => $request->genero,
-            'tipo_documento'    => $request->tipo_documento,
-            'documento'         => $request->documento,
-            'celular'           => $request->celular,
-            'correo'            => $request->correo,
-            'id_rol'            => $request->id_rol,
-            'estado_usuario'    => 'Activo',
-            'password'          => Hash::make($request->password),
+            'nombres' => $request->nombres,
+            'primer_apellido' => $request->primer_apellido,
+            'correo' => $request->correo,
+            'documento' => $request->documento,
+            'id_rol' => $request->id_rol,
+            'estado_usuario' => 'Activo',
+            'password' => Hash::make($request->password)
         ]);
 
         Auth::login($usuario);
         return redirect('/')->with('success', 'Usuario registrado correctamente.');
     }
 
-    /**
-     * Cerrar sesión
-     */
+    // Cerrar sesión
     public function logout(Request $request)
     {
         Auth::logout();
