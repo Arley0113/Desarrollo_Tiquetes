@@ -16,6 +16,12 @@ class Vuelo extends Model
     protected $fillable = [
         'fecha_vuelo',
         'hora',
+        'hora_llegada',
+        'duracion',
+        'directo',
+        'wifi',
+        'reembolsable',
+        'codigo_vuelo',
         'id_origen',
         'id_destino',
         'id_avion',
@@ -24,7 +30,11 @@ class Vuelo extends Model
 
     protected $casts = [
         'fecha_vuelo' => 'date',
-        'hora' => 'datetime:H:i'
+        'hora' => 'datetime:H:i',
+        'hora_llegada' => 'datetime:H:i',
+        'directo' => 'boolean',
+        'wifi' => 'boolean',
+        'reembolsable' => 'boolean'
     ];
 
     // Relaciones

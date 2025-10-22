@@ -24,6 +24,8 @@ use App\Http\Controllers\HomeController;
 // =====================================================
 Route::get('/', [VueloController::class, 'index'])->name('inicio');
 Route::get('/vuelos/buscar', [VueloController::class, 'buscar'])->name('vuelos.buscar');
+Route::get('/vuelo/{id}', [VueloController::class, 'mostrar'])->name('vuelo.mostrar');
+
 
 // =====================================================
 // 🔹 AUTENTICACIÓN
