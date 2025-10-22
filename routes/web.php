@@ -9,6 +9,7 @@ use App\Http\Controllers\ReservaController;
 use App\Http\Controllers\PagoController;
 use App\Http\Controllers\TiqueteController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PasajeroController;
 
 /*
 |--------------------------------------------------------------------------
@@ -113,3 +114,9 @@ Route::middleware(['auth'])->prefix('tiquetes')->controller(TiqueteController::c
 Route::fallback(function () {
     return redirect()->route('inicio');
 });
+
+// =====================================================
+
+
+Route::get('/pasajeros', [PasajeroController::class, 'create'])->name('pasajeros.create');
+Route::post('/pasajeros', [PasajeroController::class, 'store'])->name('pasajeros.guardar');
