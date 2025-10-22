@@ -26,12 +26,6 @@ class RolSeeder extends Seeder
                 'nombre_rol' => 'Administrador',
                 'created_at' => now(),
                 'updated_at' => now(),
-            ],
-            [
-                'id_rol' => 3,
-                'nombre_rol' => 'Empleado',
-                'created_at' => now(),
-                'updated_at' => now(),
             ]
         ];
 
