@@ -7,22 +7,30 @@
     <div class="overlay-box p-5 rounded shadow-lg">
         <h1 class="fw-bold mb-4">Encuentra tu vuelo ideal</h1>
 
-        <form method="GET" action="{{ route('vuelos.buscar') }}" 
+        <form method="GET" action="{{ route('vuelos.buscar') }}" id="form-busqueda"
               class="row g-2 justify-content-center buscador-form bg-white p-3 rounded shadow">
+            
+            {{-- CAMPO ORIGEN --}}
             <div class="col-12 col-md-3">
-                <select name="origen" class="form-select" required>
-                    <option value="">Origen</option>
-                    @foreach ($lugares as $lugar)
-                        <option value="{{ $lugar->id }}">{{ $lugar->nombre }}</option>
+                <select name="origen" class="form-control" required>
+                    <option value="">Selecciona origen</option>
+                    @foreach($lugares as $lugar)
+                        {{-- Usamos array syntax para compatibilidad --}}
+                        <option value="{{ is_array($lugar) ? $lugar['id_lugar'] : $lugar->id_lugar }}">
+                            {{ is_array($lugar) ? $lugar['nombre_lugar'] : $lugar->nombre_lugar }}
+                        </option>
                     @endforeach
                 </select>
             </div>
 
+            {{-- CAMPO DESTINO --}}
             <div class="col-12 col-md-3">
-                <select name="destino" class="form-select" required>
-                    <option value="">Destino</option>
-                    @foreach ($lugares as $lugar)
-                        <option value="{{ $lugar->id }}">{{ $lugar->nombre }}</option>
+                <select name="destino" class="form-control" required>
+                    <option value="">Selecciona destino</option>
+                    @foreach($lugares as $lugar)
+                        <option value="{{ is_array($lugar) ? $lugar['id_lugar'] : $lugar->id_lugar }}">
+                            {{ is_array($lugar) ? $lugar['nombre_lugar'] : $lugar->nombre_lugar }}
+                        </option>
                     @endforeach
                 </select>
             </div>
@@ -34,7 +42,7 @@
             <div class="col-12 col-md-2">
                 <button type="submit" class="btn btn-primary w-100">Buscar</button>
             </div>
-        </form>
+        </form> 
     </div>
 </header>
 
@@ -75,3 +83,21 @@
         <a href="{{ route('register.form') }}" class="btn btn-light btn-lg">Comenzar ahora</a>
     </div>
 </section>
+@endsection
+
+@push('styles')
+<style>
+body { font-family: 'Poppins', sans-serif; background-color: #131415; }
+.header-busqueda { background: url('{{ asset('images/fondo-aerolinea.jpg') }}') no-repeat center center; background-size: cover; height: 90vh; position: relative; }
+.overlay-box { background: rgba(0,0,0,0.65); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(8px); max-width: 900px; color: #fff; animation: fadeInBox 1.2s ease forwards; }
+@keyframes fadeInBox { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { opacity: 0; transform: translateY(30px); animation: fadeInUp 1s forwards; }
+.fade-in-bottom { opacity: 0; transform: translateY(60px); animation: fadeInUp 1.5s forwards; }
+@keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+.card { border: none; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+.card-img-top { height: 200px; object-fit: cover; }
+.btn-primary { background-color: #0d6efd; border: none; transition: background-color 0.3s ease; }
+.btn-primary:hover { background-color: #0b5ed7; }
+</style>
+@endpush
