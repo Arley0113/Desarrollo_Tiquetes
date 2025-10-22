@@ -10,13 +10,10 @@ class VueloController extends Controller
 {
     // Formulario de búsqueda de vuelos
     public function index()
-{
-    // Traer solo los campos necesarios y convertirlos a array plano
-    $lugares = Lugar::select('id_lugar', 'nombre_lugar')->get()->toArray();
-
-    return view('index', compact('lugares'));
-}
-
+    {
+        $lugares = Lugar::all();
+        return view('vuelos.buscar', compact('lugares'));
+    }
 
     // Procesa la búsqueda
     public function buscar(Request $request)
