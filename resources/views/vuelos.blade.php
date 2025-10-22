@@ -41,7 +41,7 @@
                     <input type="date" name="fecha" class="form-control" value="{{ $fecha ?? '' }}">
                 </div>
                 <div class="col-12 col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">Buscar</button>
+                   <button type="submit" class="btn btn-primary w-100">Buscar</button>
                 </div>
             </form>
         </div>
