@@ -120,3 +120,30 @@ Route::fallback(function () {
 
 Route::get('/pasajeros', [PasajeroController::class, 'create'])->name('pasajeros.create');
 Route::post('/pasajeros', [PasajeroController::class, 'store'])->name('pasajeros.guardar');
+Route::get('/reserva/{id}', [ReservaController::class, 'mostrar'])->name('reserva.mostrar');
+
+//////////////////////////////////////////////
+
+//ticked de reserva por completar
+
+Route::get('/reserva/{id}', function ($id) {
+
+    $reserva = (object)[
+        'codigo' => 'ABC123',
+        'asiento' => '12A',
+        'clase' => 'Económica',
+        'total' => 150,
+        'pasajero' => (object)[
+            'nombre' => 'Juan Pérez'
+        ],
+        'vuelo' => (object)[
+            'origen' => 'Bogotá',
+            'destino' => 'Medellín',
+            'hora_salida' => '08:00',
+            'hora_llegada' => '09:15',
+            'aerolinea' => 'Aerolínea XYZ'
+        ]
+    ];
+
+    return view('reservas.mostrar', compact('reserva'));
+});

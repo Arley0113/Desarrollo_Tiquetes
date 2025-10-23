@@ -66,4 +66,16 @@ class Reserva extends Model
     {
         return $this->tiquetes()->count() > 0;
     }
+
+
+
+    // Reserva.php
+public function vuelo() {
+    return $this->belongsTo(Vuelo::class);
+}
+
+public function pasajero() {
+    return $this->belongsTo(Pasajero::class);
+}
+
 }

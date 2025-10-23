@@ -200,4 +200,23 @@ class ReservaController extends Controller
             return back()->withErrors(['error' => 'Error al cancelar: ' . $e->getMessage()]);
         }
     }
-}
+
+        //////////////////////////////////////////
+
+
+     //ticked de reserva por completar
+    
+    
+        public function mostrar($id)
+        {
+            $reserva = Reserva::with('vuelo')->findOrFail($id); // trae datos del vuelo y pasajero
+
+            return view('reserva.mostrar', compact('reserva'));
+        }
+    }
+
+
+
+    
+
+

@@ -20,23 +20,44 @@
             <form action="{{ route('pasajeros.guardar') }}" method="POST">
                 @csrf
 
-                <!-- Pasajero Principal -->
                 <div class="mb-4">
                     <h5 class="mb-3 fw-bold">Pasajero 1 (Principal)</h5>
                     <div class="row g-3">
 
                         <div class="col-md-6">
-                            <label for="nombre" class="form-label fw-semibold">Nombre *</label>
-                            <input type="text" name="nombre" id="nombre" class="form-control form-control-lg" placeholder="Nombre" value="{{ old('nombre') }}" required>
+                            <label for="nombre" class="form-label fw-semibold">Nombres *</label>
+                            <input type="text" name="nombre" id="nombre" class="form-control form-control-lg" placeholder="Nombres" value="{{ old('nombre') }}" required>
                             @error('nombre')
                                 <div class="text-danger small mt-1">{{ $message }}</div>
                             @enderror
                         </div>
 
                         <div class="col-md-6">
-                            <label for="apellido" class="form-label fw-semibold">Apellido *</label>
-                            <input type="text" name="apellido" id="apellido" class="form-control form-control-lg" placeholder="Apellido" value="{{ old('apellido') }}" required>
+                            <label for="apellido" class="form-label fw-semibold">Apellidos *</label>
+                            <input type="text" name="apellido" id="apellido" class="form-control form-control-lg" placeholder="Apellidos" value="{{ old('apellido') }}" required>
                             @error('apellido')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="tipo_documento" class="form-label fw-semibold">Tipo de Documento *</label>
+                            <select name="tipo_documento" id="tipo_documento" class="form-select form-select-lg" required>
+                                <option value="">Selecciona...</option>
+                                <option value="cc">Cédula de Ciudadanía</option>
+                                <option value="ti">Tarjeta de Identidad</option>
+                                <option value="pasaporte">Pasaporte</option>
+                                <option value="ce">Cédula de Extranjería</option>
+                            </select>
+                            @error('tipo_documento')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="numero_documento" class="form-label fw-semibold">Número de Documento *</label>
+                            <input type="text" name="numero_documento" id="numero_documento" class="form-control form-control-lg" placeholder="Número de documento" value="{{ old('numero_documento') }}" required>
+                            @error('numero_documento')
                                 <div class="text-danger small mt-1">{{ $message }}</div>
                             @enderror
                         </div>
@@ -78,23 +99,12 @@
                             @enderror
                         </div>
 
-                        <!-- Ciudad y Departamento con Autocomplete -->
-                        <div class="col-md-6 position-relative">
-                            <label for="ciudad" class="form-label fw-semibold">Ciudad *</label>
-                            <input type="text" id="ciudad" name="ciudad" class="form-control form-control-lg" placeholder="Ciudad de residencia" autocomplete="off" required>
-                            <div id="lista-ciudades" class="list-group position-absolute z-index-10 w-100"></div>
-                            @error('ciudad')
-                                <div class="text-danger small mt-1">{{ $message }}</div>
-                            @enderror
-                        </div>
 
-                        <div class="col-md-6 position-relative">
-                            <label for="departamento" class="form-label fw-semibold">Departamento *</label>
-                            <input type="text" id="departamento" name="departamento" class="form-control form-control-lg" placeholder="Departamento" autocomplete="off" required>
-                            <div id="lista-departamentos" class="list-group position-absolute z-index-10 w-100"></div>
-                            @error('departamento')
-                                <div class="text-danger small mt-1">{{ $message }}</div>
-                            @enderror
+                        <!-- Condición del infante si menor de 3 años -->
+                        <div class="col-md-12 mt-3">
+
+                            <label for="condicion_infante" class="form-label fw-semibold">Condición del infante (si menor de 3 años) | Solo Aplica si tienes un infante</label>
+                            <input type="text" name="condicion_infante" id="condicion_infante" class="form-control form-control-lg" placeholder="Condición especial del infante">
                         </div>
 
                     </div>
@@ -142,34 +152,4 @@
     </div>
 </div>
 
-<script>
-const ciudades = ["Bogotá", "Medellín", "Cali", "Barranquilla", "Cartagena", "Bucaramanga", "Pereira", "Manizales"];
-const departamentos = ["Cundinamarca", "Antioquia", "Valle del Cauca", "Atlántico", "Bolívar", "Santander", "Risaralda", "Caldas"];
-
-function autocomplete(input, lista, opciones) {
-    input.addEventListener('input', function() {
-        lista.innerHTML = '';
-        const val = this.value.toLowerCase();
-        if(!val) return;
-        opciones.filter(opt => opt.toLowerCase().includes(val)).forEach(opt => {
-            const item = document.createElement('button');
-            item.type = 'button';
-            item.classList.add('list-group-item', 'list-group-item-action');
-            item.textContent = opt;
-            item.addEventListener('click', () => {
-                input.value = opt;
-                lista.innerHTML = '';
-            });
-            lista.appendChild(item);
-        });
-    });
-
-    document.addEventListener('click', (e) => {
-        if(e.target !== input) lista.innerHTML = '';
-    });
-}
-
-autocomplete(document.getElementById('ciudad'), document.getElementById('lista-ciudades'), ciudades);
-autocomplete(document.getElementById('departamento'), document.getElementById('lista-departamentos'), departamentos);
-</script>
 @endsection
