@@ -23,7 +23,7 @@ class HandleFormErrors
                     'url' => $request->fullUrl(),
                     'method' => $request->method(),
                     'errors' => $errors->getMessages(),
-                    'user_id' => auth()->id()
+                    'user_id' => auth()->check() ? (auth()->user()->id_usuario ?? null) : null,
                 ]);
             }
         }
