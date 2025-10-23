@@ -32,7 +32,9 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="mb-1">Reserva #{{ $reserva->numero_reserva }}</h6>
-                                    <small>{{ \Carbon\Carbon::parse($reserva->fecha_reserva)->format('d/m/Y H:i') }}</small>
+                                    <small>
+                                        {{ \Carbon\Carbon::parse(($reserva->fecha_reserva ?? now()).' '.($reserva->hora_reserva ?? '00:00:00'))->format('d/m/Y H:i') }}
+                                    </small>
                                 </div>
                                 <span class="badge bg-light text-dark">
                                     {{ $reserva->tiquetes->count() }} tiquete{{ $reserva->tiquetes->count() > 1 ? 's' : '' }}
@@ -44,18 +46,18 @@
                             <div class="mb-3">
                                 <div class="d-flex align-items-center mb-2">
                                     <i class="bi bi-airplane text-primary me-2"></i>
-                                    <strong>{{ $reserva->tiquetes->first()->vuelo->origen->nombre ?? 'N/A' }}</strong>
+                                    <strong>{{ optional(optional($reserva->vuelo)->origen)->nombre_lugar ?? 'N/A' }}</strong>
                                     <i class="bi bi-arrow-right mx-2 text-muted"></i>
-                                    <strong>{{ $reserva->tiquetes->first()->vuelo->destino->nombre ?? 'N/A' }}</strong>
+                                    <strong>{{ optional(optional($reserva->vuelo)->destino)->nombre_lugar ?? 'N/A' }}</strong>
                                 </div>
                                 <div class="row text-muted small">
                                     <div class="col-6">
                                         <i class="bi bi-calendar me-1"></i>
-                                        {{ \Carbon\Carbon::parse($reserva->tiquetes->first()->vuelo->fecha_salida ?? now())->format('d/m/Y') }}
+                                        {{ \Carbon\Carbon::parse(optional($reserva->vuelo)->fecha_vuelo ?? now())->format('d/m/Y') }}
                                     </div>
                                     <div class="col-6">
                                         <i class="bi bi-clock me-1"></i>
-                                        {{ \Carbon\Carbon::parse($reserva->tiquetes->first()->vuelo->hora_salida ?? now())->format('H:i') }}
+                                        {{ \Carbon\Carbon::parse(optional($reserva->vuelo)->hora ?? now())->format('H:i') }}
                                     </div>
                                 </div>
                             </div>
@@ -66,7 +68,7 @@
                                 @foreach($reserva->pasajeros as $pasajero)
                                 <div class="d-flex align-items-center mb-1">
                                     <i class="bi bi-person-circle text-primary me-2"></i>
-                                    <span>{{ $pasajero->nombre }}</span>
+                                    <span>{{ $pasajero->nombre_pasajero }}</span>
                                 </div>
                                 @endforeach
                             </div>
@@ -75,16 +77,22 @@
                             <div class="mb-3">
                                 <h6 class="text-muted mb-2">Asientos:</h6>
                                 <div class="d-flex flex-wrap gap-1">
-                                    @foreach($reserva->tiquetes as $tiquete)
-                                    <span class="badge bg-primary">{{ $tiquete->asiento->numero_completo ?? 'N/A' }}</span>
-                                    @endforeach
+                                    @forelse($reserva->tiquetes as $tiquete)
+                                        <span class="badge bg-primary">{{ optional($tiquete->asiento)->numero_completo ?? 'Por asignar' }}</span>
+                                    @empty
+                                        <span class="text-muted">Por asignar</span>
+                                    @endforelse
                                 </div>
                             </div>
 
                             <!-- Estado y precio -->
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <span class="badge bg-success">Confirmada</span>
+                                    @if($reserva->estaPagada())
+                                        <span class="badge bg-success">Pagada</span>
+                                    @else
+                                        <span class="badge bg-warning text-dark">Pendiente</span>
+                                    @endif
                                 </div>
                                 <div class="text-end">
                                     <div class="h6 text-primary mb-0">

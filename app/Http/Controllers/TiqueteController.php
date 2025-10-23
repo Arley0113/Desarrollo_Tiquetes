@@ -6,7 +6,6 @@ use App\Models\Reserva;
 use App\Models\Tiquete;
 use App\Services\TiqueteService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class TiqueteController extends Controller
 {
@@ -17,61 +16,41 @@ class TiqueteController extends Controller
         $this->tiqueteService = $tiqueteService;
     }
 
-    /**
-     * Ver mis tiquetes
-     */
     public function index()
     {
-        $tiquetes = Tiquete::with(['vuelo.origen', 'vuelo.destino', 'asiento', 'pasajero'])
-            ->whereHas('reserva', function($query) {
-                $query->where('id_usuario', Auth::id());
+        $tiquetes = Tiquete::with(['reserva.vuelo.origen', 'reserva.vuelo.destino', 'asiento'])
+            ->whereHas('reserva', function ($q) {
+                $q->where('id_usuario', auth()->user()->id_usuario);
             })
-            ->orderBy('created_at', 'desc')
+            ->orderByDesc('id_tiquete')
             ->paginate(10);
 
         return view('tiquetes.index', compact('tiquetes'));
     }
 
-    /**
-     * Generar tiquetes para una reserva
-     */
-    public function generar($id_reserva)
-    {
-        $reserva = Reserva::with(['vuelo', 'pasajeros'])->findOrFail($id_reserva);
-        $this->tiqueteService->generarTiquetes($reserva);
-
-        return view('reservas.confirmacion', compact('reserva'))
-            ->with('success', 'Tiquetes generados exitosamente.');
-    }
-
-    /**
-     * Ver detalles de un tiquete
-     */
     public function show($id)
     {
-        $tiquete = Tiquete::with(['vuelo.origen', 'vuelo.destino', 'asiento', 'pasajero', 'reserva'])
-            ->whereHas('reserva', function($query) {
-                $query->where('id_usuario', Auth::id());
+        $tiquete = Tiquete::with(['reserva.vuelo.origen', 'reserva.vuelo.destino', 'asiento'])
+            ->whereHas('reserva', function ($q) {
+                $q->where('id_usuario', auth()->user()->id_usuario);
             })
             ->findOrFail($id);
 
         return view('tiquetes.show', compact('tiquete'));
     }
 
-    /**
-     * Descargar tiquete
-     */
-    public function descargar($id)
+    public function generar($id_reserva)
     {
-        $tiquete = Tiquete::with(['vuelo.origen', 'vuelo.destino', 'asiento', 'pasajero', 'reserva'])
-            ->whereHas('reserva', function($query) {
-                $query->where('id_usuario', Auth::id());
-            })
-            ->findOrFail($id);
+        $reserva = Reserva::with(['pasajeros', 'vuelo.precio'])->findOrFail($id_reserva);
 
-        // Aquí implementarías la lógica para generar y descargar el PDF
-        // Por ahora solo redirigimos a la vista
-        return view('tiquetes.show', compact('tiquete'))
-            ->with('success', 'Tiquete listo para descargar.');
+        if (auth()->check() && empty($reserva->id_usuario)) {
+            $reserva->id_usuario = auth()->user()->id_usuario;
+            $reserva->save();
+        }
+
+        $tiquetes = $this->tiqueteService->generarTiquetes($reserva);
+
+        return redirect()->route('tiquetes.index')
+            ->with('success', 'Tiquetes generados correctamente.');
     }
 }

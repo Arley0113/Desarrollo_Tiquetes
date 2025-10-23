@@ -5,6 +5,18 @@
 @section('content')
 <div class="container-fluid py-4">
     <div class="container">
+        @if(session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
+        @if(session('error'))
+            <div class="alert alert-danger">{{ session('error') }}</div>
+        @endif
+        @if($errors->any())
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                {{ $errors->first() }}
+            </div>
+        @endif
         <!-- Header del vuelo -->
         <div class="row mb-4">
             <div class="col-12">
@@ -54,7 +66,6 @@
                                     </div>
                                     <div class="d-flex align-items-center">
                                         <div class="seat-legend seleccionado me-2"></div>
-                                        <span class="small">Seleccionado</span>
                                     </div>
                                     <div class="d-flex align-items-center">
                                         <div class="seat-legend ocupado me-2"></div>
@@ -79,7 +90,6 @@
                                     <i class="bi bi-arrow-up me-1"></i>Frente
                                 </button>
                             </div>
-                            
                             <div class="seat-map">
                                 <!-- Columnas A-F -->
                                 <div class="seat-row-header">
@@ -200,19 +210,17 @@
 
         <!-- Navegación -->
         <div class="row mt-4">
-            <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center">
-                    <a href="{{ route('vuelo.mostrar', $vuelo->id_vuelo) }}" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left me-2"></i>Anterior
-                    </a>
-                    <div class="text-center">
-                        <div class="h4 text-primary mb-0" id="total-display">${{ number_format($vuelo->precio->precio_ida, 0, ',', '.') }}</div>
-                        <small class="text-muted">Total a Pagar</small>
-                    </div>
-                    <button type="submit" form="form-asientos" class="btn btn-primary" id="btn-continuar-footer" disabled>
-                        Continuar <i class="bi bi-arrow-right ms-2"></i>
-                    </button>
+            <div class="col-12 d-flex justify-content-between align-items-center">
+                <a href="{{ route('vuelo.mostrar', $vuelo->id_vuelo) }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Anterior
+                </a>
+                <div class="text-center">
+                    <div class="h4 text-primary mb-0" id="total-display">${{ number_format($vuelo->precio->precio_ida, 0, ',', '.') }}</div>
+                    <small class="text-muted">Total a Pagar</small>
                 </div>
+                <button type="submit" form="form-asientos" class="btn btn-primary" id="btn-continuar-footer" disabled>
+                    Continuar <i class="bi bi-arrow-right ms-2"></i>
+                </button>
             </div>
         </div>
     </div>

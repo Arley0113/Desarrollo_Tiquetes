@@ -25,8 +25,32 @@ class ReservaController extends Controller
      */
     public function index()
     {
-        $reservas = Reserva::with(['pasajeros', 'tiquetes.vuelo.origen', 'tiquetes.vuelo.destino', 'tiquetes.asiento', 'pagos'])
-            ->where('id_usuario', Auth::id())
+        // Intentar reclamar reservas huérfanas (sin usuario) por correo del pago
+        if (Auth::check()) {
+            try {
+                Reserva::whereNull('id_usuario')
+                    ->whereHas('pagos', function ($q) {
+                        $q->where('correo', Auth::user()->correo);
+                    })
+                    ->update(['id_usuario' => Auth::user()->id_usuario]);
+            } catch (\Throwable $e) {
+                // No interrumpir la vista si falla el reclamo; solo registrar si es necesario
+                \Log::warning('No se pudo reclamar reservas por correo', [
+                    'user_id' => Auth::user()->id_usuario ?? null,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        $reservas = Reserva::with([
+                'vuelo.origen',
+                'vuelo.destino',
+                'vuelo.precio',
+                'pasajeros',
+                'tiquetes.asiento',
+                'pagos'
+            ])
+            ->where('id_usuario', Auth::user()->id_usuario)
             ->orderBy('fecha_reserva', 'desc')
             ->paginate(10);
 
@@ -140,27 +164,47 @@ class ReservaController extends Controller
         ]);
 
         $asientosIds = json_decode($request->asientos, true);
-        $reservaTemp = session('reserva_temp');
-
-        if (!$reservaTemp || $reservaTemp['id_vuelo'] != $id_vuelo) {
-            return redirect()->route('vuelo.mostrar', $id_vuelo)
-                ->withErrors(['error' => 'Sesión expirada. Por favor inicia de nuevo.']);
+        if (!is_array($asientosIds) || count($asientosIds) < 1) {
+            return back()->withErrors(['Debes seleccionar al menos 1 asiento.']);
         }
 
-        if (count($asientosIds) !== 1) { // Por ahora solo 1 pasajero
-            return back()->withErrors(['error' => 'Debes seleccionar exactamente 1 asiento.']);
+        $reservaTemp = session('reserva_temp');
+
+        // Construir pasajeros aún si no hay sesión (mejor UX)
+        if ($reservaTemp && ($reservaTemp['id_vuelo'] ?? null) == $id_vuelo) {
+            $pasajeros = [
+                [
+                    'nombre' => $reservaTemp['pasajero_principal']['nombre'] ?? 'Invitado',
+                    'documento' => $reservaTemp['pasajero_principal']['documento'] ?? null,
+                    'acompanante' => false,
+                ]
+            ];
+        } else {
+            // Fallback: si hay usuario autenticado, usar sus datos; si no, datos genéricos
+            $nombre = 'Invitado';
+            $documento = null;
+            if (Auth::check()) {
+                $u = Auth::user();
+                $nombre = trim(($u->nombres ?? '') . ' ' . ($u->primer_apellido ?? '')) ?: 'Invitado';
+                $documento = $u->documento ?? null;
+            }
+            $pasajeros = [[
+                'nombre' => $nombre,
+                'documento' => $documento,
+                'acompanante' => false,
+            ]];
         }
 
         try {
             // Verificar disponibilidad usando el servicio
             if (!$this->reservaService->verificarDisponibilidadAsientos($id_vuelo, $asientosIds)) {
-                return back()->withErrors(['error' => 'Algunos asientos ya no están disponibles.']);
+                return back()->withErrors(['Algunos asientos ya no están disponibles.']);
             }
 
-            // Crear reserva usando el servicio (sin usuario autenticado)
-            $pasajeros = [$reservaTemp['pasajero_principal']];
+            // Crear reserva usando el servicio
+            $usuarioId = Auth::check() ? Auth::user()->id_usuario : null;
             $reserva = $this->reservaService->crearReservaCompleta(
-                null, // Sin usuario autenticado
+                $usuarioId,
                 $id_vuelo,
                 $pasajeros,
                 $asientosIds
@@ -188,8 +232,8 @@ class ReservaController extends Controller
      */
     public function misReservas()
     {
-        $reservas = Reserva::with(['pasajeros', 'tiquetes.vuelo.origen', 'tiquetes.vuelo.destino'])
-            ->where('id_usuario', Auth::id())
+        $reservas = Reserva::with(['vuelo.origen', 'vuelo.destino', 'pasajeros'])
+            ->where('id_usuario', Auth::user()->id_usuario)
             ->orderBy('fecha_reserva', 'desc')
             ->paginate(10);
 
@@ -202,7 +246,7 @@ class ReservaController extends Controller
     public function cancelar($id_reserva)
     {
         try {
-            $this->reservaService->cancelarReserva($id_reserva, Auth::id());
+            $this->reservaService->cancelarReserva($id_reserva, Auth::user()->id_usuario);
             return back()->with('success', 'Reserva cancelada exitosamente.');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Error al cancelar: ' . $e->getMessage()]);
@@ -235,7 +279,7 @@ class ReservaController extends Controller
         $reserva = Reserva::with('vuelo')->findOrFail($id);
         return view('reserva.mostrar', compact('reserva'));
     }
-    }
+}
 
 
 
