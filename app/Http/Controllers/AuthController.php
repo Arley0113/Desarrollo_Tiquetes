@@ -24,8 +24,10 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
 
-        if (Auth::attempt(['correo' => $credentials['correo'], 'password' => $credentials['password']])) {
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
+            
+            // Redirigir a la URL que intentaba acceder o a la página principal
             return redirect()->intended('/')->with('success', 'Inicio de sesión exitoso.');
         }
 

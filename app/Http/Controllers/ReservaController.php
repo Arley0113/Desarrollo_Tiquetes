@@ -21,6 +21,19 @@ class ReservaController extends Controller
     }
 
     /**
+     * Ver mis reservas
+     */
+    public function index()
+    {
+        $reservas = Reserva::with(['pasajeros', 'tiquetes.vuelo.origen', 'tiquetes.vuelo.destino', 'tiquetes.asiento', 'pagos'])
+            ->where('id_usuario', Auth::id())
+            ->orderBy('fecha_reserva', 'desc')
+            ->paginate(10);
+
+        return view('reservas.index', compact('reservas'));
+    }
+
+    /**
      * Vista inicial: información de pasajeros
      */
     public function create($id_vuelo)
@@ -30,11 +43,6 @@ class ReservaController extends Controller
         // Verificar que hay asientos disponibles
         if ($vuelo->asientosDisponibles() <= 0) {
             return redirect()->back()->withErrors(['error' => 'No hay asientos disponibles para este vuelo.']);
-        }
-
-        // Si el usuario no está autenticado, mostrar mensaje de login
-        if (!auth()->check()) {
-            return view('reservas.login_required', compact('vuelo'));
         }
 
         return view('reservas.pasajeros', compact('vuelo'));
@@ -70,8 +78,8 @@ class ReservaController extends Controller
         ]);
 
         // Redirigir a selección de asientos
-        return redirect()->route('reservas.seleccionarAsientos', [
-            'id_vuelo' => $request->id_vuelo,
+        return redirect()->route('reservas.asientos.seleccionar', [
+            'vuelo' => $request->id_vuelo,
             'cantidad' => 1 // Por ahora solo 1 pasajero
         ]);
     }
@@ -114,7 +122,7 @@ class ReservaController extends Controller
 
         $reservaTemp = session('reserva_temp');
 
-        return view('reservas.seleccionar_asientos', compact(
+        return view('reservas.seleccionar_asientos_simple', compact(
             'vuelo',
             'asientos',
             'cantidadPasajeros',
@@ -149,10 +157,10 @@ class ReservaController extends Controller
                 return back()->withErrors(['error' => 'Algunos asientos ya no están disponibles.']);
             }
 
-            // Crear reserva usando el servicio
+            // Crear reserva usando el servicio (sin usuario autenticado)
             $pasajeros = [$reservaTemp['pasajero_principal']];
             $reserva = $this->reservaService->crearReservaCompleta(
-                Auth::id(),
+                null, // Sin usuario autenticado
                 $id_vuelo,
                 $pasajeros,
                 $asientosIds
@@ -203,16 +211,30 @@ class ReservaController extends Controller
 
         //////////////////////////////////////////
 
+    /**
+     * Mostrar confirmación de reserva
+     */
+    public function confirmacion($id)
+    {
+        $reserva = Reserva::with([
+            'vuelo.origen', 
+            'vuelo.destino', 
+            'pasajeros', 
+            'tiquetes.asiento',
+            'pagos'
+        ])->findOrFail($id);
 
-     //ticked de reserva por completar
-    
-    
-        public function mostrar($id)
-        {
-            $reserva = Reserva::with('vuelo')->findOrFail($id); // trae datos del vuelo y pasajero
+        return view('reservas.confirmacion', compact('reserva'));
+    }
 
-            return view('reserva.mostrar', compact('reserva'));
-        }
+    /**
+     * Mostrar detalles de reserva
+     */
+    public function mostrar($id)
+    {
+        $reserva = Reserva::with('vuelo')->findOrFail($id);
+        return view('reserva.mostrar', compact('reserva'));
+    }
     }
 
 

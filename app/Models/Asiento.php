@@ -105,8 +105,8 @@ class Asiento extends Model
     public function getPrecioAdicionalAttribute()
     {
         return match($this->tipo_asiento) {
-            'extra' => 30000,
-            'emergencia' => 35000,
+            'extra' => 25000,
+            'emergencia' => 15000,
             default => 0,
         };
     }

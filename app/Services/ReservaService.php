@@ -38,7 +38,7 @@ class ReservaService
                 'numero_reserva' => 'RES-' . strtoupper(Str::random(8)),
                 'fecha_reserva' => now()->toDateString(),
                 'hora_reserva' => now()->toTimeString(),
-                'id_usuario' => $usuarioId,
+                'id_usuario' => $usuarioId, // Puede ser null para usuarios no autenticados
             ]);
 
             // Crear pasajeros
@@ -50,6 +50,14 @@ class ReservaService
                     'es_acompanante' => $pasajero['acompanante'] ?? false,
                     'id_asiento' => $asientosIds[$index] ?? null,
                 ]);
+            }
+
+            // Marcar asientos como ocupados
+            foreach ($asientosIds as $asientoId) {
+                $asiento = Asiento::find($asientoId);
+                if ($asiento) {
+                    $asiento->ocupar();
+                }
             }
 
             Log::info("Reserva creada exitosamente", [

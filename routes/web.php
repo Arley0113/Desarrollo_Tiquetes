@@ -63,14 +63,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('usuarios')->controller(Usuari
 // =====================================================
 // 🔹 RESERVAS
 // =====================================================
-// Ruta pública para iniciar reserva (sin autenticación)
-Route::get('/reservas/crear/{vuelo}', [ReservaController::class, 'create'])->name('reservas.create');
-
-// Rutas que requieren autenticación
-Route::middleware(['auth'])->prefix('reservas')->controller(ReservaController::class)->group(function () {
-    Route::get('/', 'index')->name('reservas.index');
+// Rutas públicas para el proceso de reserva
+Route::prefix('reservas')->controller(ReservaController::class)->group(function () {
+    // Ruta pública para iniciar reserva (sin autenticación)
+    Route::get('/crear/{vuelo}', 'create')->name('reservas.create');
     
-    // FLUJO COMPLETO DE RESERVA CON ASIENTOS
     // Paso 2: Guardar pasajeros y redirigir a selección de asientos
     Route::post('/pasajeros/guardar', 'guardarPasajeros')->name('reservas.pasajeros.guardar');
     
@@ -79,9 +76,36 @@ Route::middleware(['auth'])->prefix('reservas')->controller(ReservaController::c
     
     // Paso 4: Guardar asientos seleccionados y crear reserva final
     Route::post('/asientos/{vuelo}', 'guardarAsientos')->name('reservas.asientos.guardar');
+});
+
+// Ruta temporal para test
+Route::get('/test-asientos', function() {
+    return view('reservas.test_asientos');
+})->name('test.asientos');
+
+// Ruta para test con datos reales
+Route::get('/test-asientos-real', function() {
+    $vuelo = App\Models\Vuelo::with(['origen', 'destino', 'precio', 'avion'])->first();
+    $asientos = App\Models\Asiento::where('id_avion', $vuelo->id_avion)
+        ->ordenados()
+        ->get()
+        ->groupBy('fila');
+    $cantidadPasajeros = 1;
+    $reservaTemp = null;
     
-    // Otras rutas de reservas
+    return view('reservas.seleccionar_asientos_simple', compact(
+        'vuelo',
+        'asientos',
+        'cantidadPasajeros',
+        'reservaTemp'
+    ));
+})->name('test.asientos.real');
+
+// Rutas que requieren autenticación
+Route::middleware(['auth'])->prefix('reservas')->controller(ReservaController::class)->group(function () {
+    Route::get('/', 'index')->name('reservas.index');
     Route::get('/ver/{id}', 'show')->name('reservas.show');
+    Route::get('/confirmacion/{id}', 'confirmacion')->name('reservas.confirmacion');
     Route::get('/editar/{id}', 'edit')->name('reservas.edit');
     Route::put('/actualizar/{id}', 'update')->name('reservas.update');
     Route::delete('/eliminar/{id}', 'destroy')->name('reservas.destroy');

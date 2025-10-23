@@ -74,6 +74,14 @@ class AsientoSeeder extends Seeder
 
                 $contador++;
 
+                // Determinar precio adicional
+                $precioAdicional = 0;
+                if ($tipoAsiento === 'extra') {
+                    $precioAdicional = 25000; // $25 USD
+                } elseif ($tipoAsiento === 'emergencia') {
+                    $precioAdicional = 15000; // $15 USD
+                }
+
                 // Crear asiento
                 Asiento::create([
                     'numero_asiento' => $fila . $columna,
@@ -81,6 +89,7 @@ class AsientoSeeder extends Seeder
                     'columna' => $columna,
                     'tipo_asiento' => $tipoAsiento,
                     'estado' => 'disponible',
+                    'precio_adicional' => $precioAdicional,
                     'id_avion' => $avion->id_avion,
                 ]);
             }
@@ -127,12 +136,21 @@ class AsientoSeeder extends Seeder
                     $tipoAsiento = 'emergencia';
                 }
 
+                // Determinar precio adicional
+                $precioAdicional = 0;
+                if ($tipoAsiento === 'extra') {
+                    $precioAdicional = 25000; // $25 USD
+                } elseif ($tipoAsiento === 'emergencia') {
+                    $precioAdicional = 15000; // $15 USD
+                }
+
                 Asiento::create([
                     'numero_asiento' => $fila . $columna,
                     'fila' => $fila,
                     'columna' => $columna,
                     'tipo_asiento' => $tipoAsiento,
                     'estado' => 'disponible',
+                    'precio_adicional' => $precioAdicional,
                     'id_avion' => $avion->id_avion,
                 ]);
             }

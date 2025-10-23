@@ -82,6 +82,37 @@
         .bg-primary {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%) !important;
         }
+        
+        /* Estilos para el menú desplegable del usuario */
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+        }
+        
+        .dropdown-item {
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            margin: 2px 8px;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+            transform: translateX(5px);
+        }
+        
+        .dropdown-item.text-danger:hover {
+            background-color: #fff5f5;
+            color: #dc3545 !important;
+        }
+        
+        .navbar-nav .nav-link {
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-nav .nav-link:hover {
+            transform: translateY(-2px);
+        }
     </style>
     
     @stack('styles')
@@ -119,20 +150,55 @@
 
                     @auth
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle text-white fw-semibold d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle me-1"></i>
-                                {{ Auth::user()->nombres ?? 'Usuario' }}
+                            <a class="nav-link dropdown-toggle text-white fw-semibold d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                        <i class="bi bi-person-fill text-primary"></i>
+                                    </div>
+                                    <span>{{ Auth::user()->nombres ?? 'Usuario' }}</span>
+                                </div>
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}">
-                                    <i class="bi bi-speedometer2 me-2"></i>Panel
+                            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 15px; min-width: 250px;">
+                                <li class="px-3 py-2 border-bottom">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                            <i class="bi bi-person-fill text-white"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-semibold">{{ Auth::user()->nombres ?? 'Usuario' }}</div>
+                                            <small class="text-muted">{{ Auth::user()->correo }}</small>
+                                        </div>
+                                    </div>
+                                </li>
+                                
+                                <li><a class="dropdown-item py-2" href="{{ route('reservas.index') }}">
+                                    <i class="bi bi-ticket-perforated me-2 text-primary"></i>Mis Reservas
                                 </a></li>
+                                
+                                <li><a class="dropdown-item py-2" href="{{ route('tiquetes.index') }}">
+                                    <i class="bi bi-receipt me-2 text-primary"></i>Mis Tiquetes
+                                </a></li>
+                                
+                                @if(Auth::user()->esAdmin())
                                 <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item py-2" href="{{ route('admin.dashboard') }}">
+                                    <i class="bi bi-speedometer2 me-2 text-warning"></i>Panel Administrativo
+                                </a></li>
+                                <li><a class="dropdown-item py-2" href="{{ route('usuarios.index') }}">
+                                    <i class="bi bi-people me-2 text-warning"></i>Gestionar Usuarios
+                                </a></li>
+                                @endif
+                                
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item py-2" href="#">
+                                    <i class="bi bi-gear me-2 text-secondary"></i>Configuración
+                                </a></li>
+                                
                                 <li>
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
-                                        <button class="dropdown-item text-danger" type="submit">
-                                            <i class="bi bi-box-arrow-right me-2"></i>Salir
+                                        <button class="dropdown-item py-2 text-danger" type="submit">
+                                            <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
                                         </button>
                                     </form>
                                 </li>
