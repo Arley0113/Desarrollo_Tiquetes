@@ -28,7 +28,12 @@
                         <span>{{ date('d M Y', strtotime($request->fecha)) }}</span>
                 </div>
                     <div class="results-count">
-                        <span class="badge">{{ $vuelos->count() }} vuelos encontrados</span>
+                        <span class="badge">
+                            {{ $vuelosIda->count() }} vuelos de ida
+                            @if($request->tipo_viaje === 'ida_regreso')
+                                · {{ $vuelosRegreso->count() }} de regreso
+                            @endif
+                        </span>
                 </div>
                 </div>
             </div>
@@ -45,6 +50,39 @@
                             <i class="bi bi-funnel"></i>
                             Filtros
                         </h5>
+
+                        <!-- Modificar búsqueda: tipo de viaje -->
+                        <form method="GET" action="{{ route('vuelos.buscar') }}" class="mb-4">
+                            <input type="hidden" name="origen" value="{{ $request->origen }}">
+                            <input type="hidden" name="destino" value="{{ $request->destino }}">
+                            <input type="hidden" name="fecha" value="{{ $request->fecha }}">
+
+                            <div class="filter-group">
+                                <label class="filter-label">Tipo de viaje</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-item">
+                                        <input type="radio" name="tipo_viaje" value="ida" {{ ($request->tipo_viaje ?? 'ida') === 'ida' ? 'checked' : '' }}>
+                                        <span class="checkmark"></span>
+                                        <span class="checkbox-text">Solo ida</span>
+                                    </label>
+                                    <label class="checkbox-item">
+                                        <input type="radio" name="tipo_viaje" value="ida_regreso" {{ ($request->tipo_viaje ?? 'ida') === 'ida_regreso' ? 'checked' : '' }}>
+                                        <span class="checkmark"></span>
+                                        <span class="checkbox-text">Ida y regreso</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="filter-group" id="grupo-fecha-regreso" style="{{ ($request->tipo_viaje ?? 'ida') === 'ida_regreso' ? '' : 'display:none;' }}">
+                                <label class="filter-label">Fecha de regreso</label>
+                                <input type="date" name="fecha_regreso" class="form-control" min="{{ $request->fecha }}" value="{{ $request->fecha_regreso }}">
+                            </div>
+
+                            <button type="submit" class="clear-filters-btn">
+                                <i class="bi bi-arrow-repeat"></i>
+                                Actualizar búsqueda
+                            </button>
+                        </form>
                         
                         <!-- Price Range -->
                         <div class="filter-group">
@@ -130,7 +168,7 @@
                                 Resultados de búsqueda
                             </h4>
                             <div class="results-count">
-                                <span id="contadorResultados">{{ $vuelos->count() }}</span> vuelos disponibles
+                                <span id="contadorResultados">{{ $vuelosIda->count() }}</span> vuelos disponibles (ida)
                             </div>
                         </div>
                         <div class="view-options">
@@ -145,7 +183,7 @@
 
                     <!-- Flight Results -->
                     <div class="flights-container" id="lista-vuelos">
-                        @if($vuelos->isEmpty())
+                        @if($vuelosIda->isEmpty())
                             <div class="no-results">
                                 <div class="no-results-content">
                                     <i class="bi bi-search"></i>
@@ -166,7 +204,7 @@
                                 </div>
                             </div>
                         @else
-                            @foreach ($vuelos as $vuelo)
+                            @foreach ($vuelosIda as $vuelo)
                             <div class="flight-card" 
                                  data-precio="{{ $vuelo->precio->precio_ida ?? 0 }}" 
                                  data-directo="{{ $vuelo->directo ? 'true' : 'false' }}" 
@@ -251,6 +289,116 @@
                             @endforeach
                         @endif
                     </div>
+
+                    @if(($request->tipo_viaje ?? 'ida') === 'ida_regreso')
+                    <!-- Regreso Results Header -->
+                    <div class="results-header mt-4">
+                        <div class="results-info">
+                            <h4 class="results-title">
+                                <i class="bi bi-arrow-left-right"></i>
+                                Vuelos de regreso ({{ $destino->nombre_lugar }} → {{ $origen->nombre_lugar }})
+                            </h4>
+                            <div class="results-count">
+                                <span>{{ $vuelosRegreso->count() }}</span> vuelos disponibles (regreso) — 
+                                <i class="bi bi-calendar"></i>
+                                <span>{{ isset($request->fecha_regreso) ? date('d M Y', strtotime($request->fecha_regreso)) : 'Fecha no especificada' }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Regreso Flight Results -->
+                    <div class="flights-container" id="lista-vuelos-regreso">
+                        @if($vuelosRegreso->isEmpty())
+                            <div class="no-results">
+                                <div class="no-results-content">
+                                    <i class="bi bi-search"></i>
+                                    <h5>No se encontraron vuelos de regreso</h5>
+                                    <p>No hay vuelos disponibles para la ruta {{ $destino->nombre_lugar }} → {{ $origen->nombre_lugar }} en la fecha seleccionada.</p>
+                                </div>
+                            </div>
+                        @else
+                            @foreach ($vuelosRegreso as $vuelo)
+                            <div class="flight-card" 
+                                 data-precio="{{ $vuelo->precio->precio_ida ?? 0 }}" 
+                                 data-directo="{{ $vuelo->directo ? 'true' : 'false' }}" 
+                                 data-wifi="{{ $vuelo->wifi ? 'true' : 'false' }}" 
+                                 data-reembolsable="{{ $vuelo->reembolsable ? 'true' : 'false' }}"
+                                 data-hora="{{ $vuelo->hora }}"
+                                 data-duracion="{{ $vuelo->duracion ?? '2h 30m' }}"
+                                 data-asientos-disponibles="{{ $vuelo->asientosDisponibles() ?? 0 }}">
+                                
+                                <div class="flight-main">
+                                    <div class="airline-section">
+                                        <div class="airline-logo">
+                                            <i class="bi bi-airplane-fill"></i>
+                                        </div>
+                                        <div class="airline-info">
+                                            <div class="airline-name">{{ $vuelo->avion->nombre ?? 'Aerolínea' }}</div>
+                                            <div class="flight-code">{{ $vuelo->codigo_vuelo ?? 'XX0000' }}</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flight-times">
+                                        <div class="time-section">
+                                            <div class="time">{{ date('H:i', strtotime($vuelo->hora)) }}</div>
+                                            <div class="airport">{{ $destino->nombre_lugar }}</div>
+                                        </div>
+                                        <div class="flight-duration">
+                                            <div class="duration">{{ $vuelo->duracion ?? '2h 30m' }}</div>
+                                            <div class="flight-path">
+                                                @if($vuelo->directo)
+                                                    <i class="bi bi-arrow-right text-success"></i>
+                                                    <span class="direct-label">Directo</span>
+                                                @else
+                                                    <i class="bi bi-arrow-right text-warning"></i>
+                                                    <span class="stop-label">Con escala</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <div class="time-section">
+                                            <div class="time">{{ date('H:i', strtotime($vuelo->hora_llegada ?? $vuelo->hora)) }}</div>
+                                            <div class="airport">{{ $origen->nombre_lugar }}</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="price-section">
+                                        <div class="price-info">
+                                            <div class="price">${{ number_format($vuelo->precio->precio_ida ?? 0, 0, ',', '.') }}</div>
+                                            <div class="price-per">por persona</div>
+                                            <div class="seats-available">{{ $vuelo->asientosDisponibles() ?? 0 }} asientos disponibles</div>
+                                        </div>
+                                        <a href="{{ route('vuelo.mostrar', $vuelo->id_vuelo) }}" class="select-btn">
+                                            <i class="bi bi-arrow-right"></i>
+                                            Seleccionar regreso
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="flight-features">
+                                    @if($vuelo->wifi)
+                                        <span class="feature-badge wifi">
+                                            <i class="bi bi-wifi"></i>
+                                            WiFi
+                                        </span>
+                                    @endif
+                                    @if($vuelo->reembolsable)
+                                        <span class="feature-badge refundable">
+                                            <i class="bi bi-arrow-clockwise"></i>
+                                            Reembolsable
+                                        </span>
+                                    @endif
+                                    @if($vuelo->directo)
+                                        <span class="feature-badge direct">
+                                            <i class="bi bi-arrow-right"></i>
+                                            Directo
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                            @endforeach
+                        @endif
+                    </div>
+                    @endif
 
                     <!-- No Results Message -->
                     <div id="sin-resultados" class="no-results" style="display: none;">
@@ -1011,6 +1159,23 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Aplicar filtros iniciales
     filtrarVuelos();
+
+    // Toggle fecha_regreso en el formulario de modificar búsqueda
+    const tipoViajeRadios = document.querySelectorAll('input[name="tipo_viaje"]');
+    const grupoFechaRegreso = document.getElementById('grupo-fecha-regreso');
+    const inputFechaRegreso = document.querySelector('input[name="fecha_regreso"]');
+    const inputFechaIdaHidden = document.querySelector('input[name="fecha"]');
+
+    function toggleFechaRegreso() {
+        if (!grupoFechaRegreso) return;
+        const idaRegreso = Array.from(tipoViajeRadios).some(r => r.checked && r.value === 'ida_regreso');
+        grupoFechaRegreso.style.display = idaRegreso ? 'block' : 'none';
+        if (!idaRegreso && inputFechaRegreso) inputFechaRegreso.value = '';
+        if (idaRegreso && inputFechaRegreso && inputFechaIdaHidden) inputFechaRegreso.min = inputFechaIdaHidden.value;
+    }
+
+    tipoViajeRadios.forEach(r => r && r.addEventListener('change', toggleFechaRegreso));
+    toggleFechaRegreso();
 });
 </script>
 @endpush

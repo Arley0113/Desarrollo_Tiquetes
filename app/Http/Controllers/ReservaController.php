@@ -122,7 +122,7 @@ class ReservaController extends Controller
 
         $reservaTemp = session('reserva_temp');
 
-        return view('reservas.seleccionar_asientos_simple', compact(
+        return view('reservas.seleccionar_asientos', compact(
             'vuelo',
             'asientos',
             'cantidadPasajeros',

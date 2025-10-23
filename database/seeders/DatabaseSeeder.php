@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             PreciosSeeder::class,
             AeropuertoSeeder::class,
             ModeloAvionSeeder::class,
+            AsientoSeeder::class,
             VuelosSeeder::class,
         ]);
 

@@ -14,18 +14,18 @@
                             <div class="col-md-8">
                                 <h4 class="mb-2">
                                     <i class="bi bi-airplane me-2 text-primary"></i>
-                                    {{ $vuelo->origen->nombre }} → {{ $vuelo->destino->nombre }}
+                                    {{ $vuelo->origen->nombre_lugar }} → {{ $vuelo->destino->nombre_lugar }}
                                 </h4>
                                 <p class="text-muted mb-0">
                                     <i class="bi bi-calendar me-1"></i>
-                                    {{ \Carbon\Carbon::parse($vuelo->fecha_salida)->format('d/m/Y') }} 
+                                    {{ \Carbon\Carbon::parse($vuelo->fecha_vuelo)->format('d/m/Y') }} 
                                     <i class="bi bi-clock me-1 ms-3"></i>
-                                    {{ \Carbon\Carbon::parse($vuelo->hora_salida)->format('H:i') }}
+                                    {{ \Carbon\Carbon::parse($vuelo->hora)->format('H:i') }}
                                 </p>
                             </div>
                             <div class="col-md-4 text-end">
-                                <div class="h5 text-primary mb-0">${{ number_format($vuelo->precio->precio_base, 0, ',', '.') }}</div>
-                                <small class="text-muted">Precio base</small>
+                                <div class="h5 text-primary mb-0">${{ number_format($vuelo->precio->precio_ida, 0, ',', '.') }}</div>
+                                <small class="text-muted">Precio base por pasajero</small>
                             </div>
                         </div>
                     </div>
@@ -110,7 +110,8 @@
                                                         data-columna="{{ $asiento->columna }}"
                                                         data-tipo="{{ $asiento->tipo_asiento }}"
                                                         data-precio="{{ $asiento->precio_adicional }}"
-                                                        @if($asiento->estado === 'ocupado') disabled @endif>
+                                                        onclick="seleccionarAsiento(this)"
+                                                        {{ $asiento->estado === 'ocupado' ? 'disabled="disabled"' : '' }}>
                                                     @if($asiento->estado === 'ocupado')
                                                         <i class="bi bi-x"></i>
                                                     @else
@@ -165,7 +166,7 @@
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="text-muted">Precio base:</span>
-                                <span id="precio-base">${{ number_format($vuelo->precio->precio_base, 0, ',', '.') }}</span>
+                                <span id="precio-base">${{ number_format($vuelo->precio->precio_ida, 0, ',', '.') }}</span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center" id="precio-extra-container" style="display: none;">
                                 <span class="text-muted">Extras:</span>
@@ -174,7 +175,7 @@
                             <hr>
                             <div class="d-flex justify-content-between align-items-center">
                                 <strong>Total a Pagar:</strong>
-                                <strong class="text-primary h5 mb-0" id="precio-total">${{ number_format($vuelo->precio->precio_base, 0, ',', '.') }}</strong>
+                                <strong class="text-primary h5 mb-0" id="precio-total">${{ number_format($vuelo->precio->precio_ida, 0, ',', '.') }}</strong>
                             </div>
                         </div>
 
@@ -205,7 +206,7 @@
                         <i class="bi bi-arrow-left me-2"></i>Anterior
                     </a>
                     <div class="text-center">
-                        <div class="h4 text-primary mb-0" id="total-display">${{ number_format($vuelo->precio->precio_base, 0, ',', '.') }}</div>
+                        <div class="h4 text-primary mb-0" id="total-display">${{ number_format($vuelo->precio->precio_ida, 0, ',', '.') }}</div>
                         <small class="text-muted">Total a Pagar</small>
                     </div>
                     <button type="submit" form="form-asientos" class="btn btn-primary" id="btn-continuar-footer" disabled>
@@ -296,21 +297,24 @@
 
     /* Estados de asientos */
     .seat-btn.disponible {
-        border-color: #dee2e6;
-        background: white;
+        background-color: #fff;
+        border: 1px solid #ccc;
+        cursor: pointer;
         color: #495057;
     }
 
     .seat-btn.seleccionado {
-        background: #6f42c1;
-        border-color: #6f42c1;
+        background-color: #28a745;
+        border: 1px solid #28a745;
         color: white;
+        cursor: pointer;
     }
 
     .seat-btn.ocupado {
-        background: #6c757d;
-        border-color: #6c757d;
-        color: white;
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        color: #aaa;
+        cursor: not-allowed;
     }
 
     .seat-btn.extra {
@@ -380,181 +384,113 @@
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('JavaScript cargado correctamente');
+// Variables globales
+const asientosSeleccionados = [];
+const cantidadPasajeros = {{ $cantidadPasajeros }};
+const precioBase = {{ $vuelo->precio->precio_base }};
+
+// Función para seleccionar/deseleccionar asientos
+function seleccionarAsiento(btn) {
+    const asientoId = btn.getAttribute('data-asiento-id');
+    const fila = btn.getAttribute('data-fila');
+    const columna = btn.getAttribute('data-columna');
+    const tipo = btn.getAttribute('data-tipo') || 'normal';
+    const precio = parseFloat(btn.getAttribute('data-precio')) || 0;
     
-    const asientosSeleccionados = [];
-    const cantidadPasajeros = {{ $cantidadPasajeros }};
-    const precioBase = {{ $vuelo->precio->precio_base }};
+    console.log('Click en asiento:', fila + columna);
     
-    console.log('Cantidad de pasajeros:', cantidadPasajeros);
-    console.log('Precio base:', precioBase);
+    // Verificar si el asiento ya está seleccionado
+    if (btn.classList.contains('seleccionado')) {
+        // Deseleccionar
+        btn.classList.remove('seleccionado');
+        btn.classList.add('disponible');
+        
+        // Eliminar de la lista
+        const index = asientosSeleccionados.findIndex(a => a.id === asientoId);
+        if (index > -1) {
+            asientosSeleccionados.splice(index, 1);
+        }
+    } else {
+        // Si ya se alcanzó el límite, deseleccionar el primero
+        if (asientosSeleccionados.length >= cantidadPasajeros) {
+            const primerAsiento = asientosSeleccionados[0];
+            const primerBtn = document.querySelector(`.seat-btn[data-asiento-id="${primerAsiento.id}"]`);
+            if (primerBtn) {
+                primerBtn.classList.remove('seleccionado');
+                primerBtn.classList.add('disponible');
+            }
+            asientosSeleccionados.shift();
+        }
+        
+        // Seleccionar el nuevo
+        btn.classList.remove('disponible');
+        btn.classList.add('seleccionado');
+        
+        // Añadir a la lista
+        asientosSeleccionados.push({
+            id: asientoId,
+            fila: fila,
+            columna: columna,
+            tipo: tipo,
+            precio: precio
+        });
+    }
     
-    // Elementos del DOM
-    const asientosContainer = document.getElementById('asientos-seleccionados');
-    const progresoTexto = document.getElementById('progreso-texto');
-    const progresoBar = document.getElementById('progreso-bar');
-    const precioTotal = document.getElementById('precio-total');
-    const totalDisplay = document.getElementById('total-display');
-    const precioExtraContainer = document.getElementById('precio-extra-container');
-    const precioExtra = document.getElementById('precio-extra');
-    const mensajeSeleccion = document.getElementById('mensaje-seleccion');
+    // Actualizar la interfaz
+    actualizarInterfaz();
+    
+    return false; // Prevenir comportamiento por defecto
+}
+
+// Función para actualizar la interfaz con los asientos seleccionados
+function actualizarInterfaz() {
+    // Actualizar lista de asientos seleccionados
+    const listaAsientos = document.getElementById('lista-asientos-seleccionados');
+    listaAsientos.innerHTML = '';
+    
+    // Calcular precio total
+    let precioTotal = cantidadPasajeros * precioBase;
+    
+    // Mostrar asientos seleccionados
+    asientosSeleccionados.forEach(asiento => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.innerHTML = `
+            <span>Asiento ${asiento.fila}${asiento.columna} (${asiento.tipo})</span>
+            <span>+$${asiento.precio.toFixed(2)}</span>
+        `;
+        listaAsientos.appendChild(li);
+        
+        // Sumar al precio total
+        precioTotal += parseFloat(asiento.precio);
+    });
+    
+    // Actualizar contador de asientos
+    document.getElementById('contador-asientos').textContent = `${asientosSeleccionados.length}/${cantidadPasajeros}`;
+    
+    // Actualizar precio total
+    document.getElementById('precio-total').textContent = `$${precioTotal.toFixed(2)}`;
+    
+    // Actualizar campo oculto con los IDs de asientos
+    const asientosInput = document.getElementById('asientos_seleccionados');
+    asientosInput.value = asientosSeleccionados.map(a => a.id).join(',');
+    
+    // Habilitar/deshabilitar botón continuar
     const btnContinuar = document.getElementById('btn-continuar');
-    const btnContinuarFooter = document.getElementById('btn-continuar-footer');
-    const asientosInput = document.getElementById('asientos-input');
+    if (asientosSeleccionados.length === cantidadPasajeros) {
+        btnContinuar.disabled = false;
+        btnContinuar.classList.remove('disabled');
+    } else {
+        btnContinuar.disabled = true;
+        btnContinuar.classList.add('disabled');
+    }
+}
 
-    console.log('Elementos del DOM encontrados:', {
-        asientosContainer: !!asientosContainer,
-        progresoTexto: !!progresoTexto,
-        precioTotal: !!precioTotal
-    });
-
-    // Event listeners para asientos
-    const seatButtons = document.querySelectorAll('.seat-btn:not(:disabled)');
-    console.log('Botones de asientos encontrados:', seatButtons.length);
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Sistema de selección de asientos inicializando');
+    console.log('Pasajeros:', cantidadPasajeros, 'Precio base:', precioBase);
     
-    seatButtons.forEach((btn, index) => {
-        console.log(`Configurando botón ${index}:`, btn.dataset.asientoId);
-        
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log('Asiento clickeado:', this.dataset.asientoId);
-            
-            const asientoId = this.dataset.asientoId;
-            const fila = this.dataset.fila;
-            const columna = this.dataset.columna;
-            const tipo = this.dataset.tipo;
-            const precio = parseFloat(this.dataset.precio) || 0;
-
-            if (this.classList.contains('seleccionado')) {
-                // Deseleccionar asiento
-                console.log('Deseleccionando asiento:', asientoId);
-                this.classList.remove('seleccionado');
-                this.classList.add('disponible');
-                
-                const index = asientosSeleccionados.findIndex(a => a.id === asientoId);
-                if (index > -1) {
-                    asientosSeleccionados.splice(index, 1);
-                }
-            } else {
-                // Verificar si ya se alcanzó el límite
-                if (asientosSeleccionados.length >= cantidadPasajeros) {
-                    // Remover el primer asiento seleccionado
-                    const primerAsiento = asientosSeleccionados[0];
-                    const primerBtn = document.querySelector(`[data-asiento-id="${primerAsiento.id}"]`);
-                    if (primerBtn) {
-                        primerBtn.classList.remove('seleccionado');
-                        primerBtn.classList.add('disponible');
-                    }
-                    asientosSeleccionados.shift();
-                }
-
-                // Seleccionar nuevo asiento
-                console.log('Seleccionando asiento:', asientoId);
-                this.classList.remove('disponible');
-                this.classList.add('seleccionado');
-                
-                asientosSeleccionados.push({
-                    id: asientoId,
-                    fila: fila,
-                    columna: columna,
-                    tipo: tipo,
-                    precio: precio
-                });
-            }
-
-            console.log('Asientos seleccionados:', asientosSeleccionados);
-            actualizarInterfaz();
-        });
-    });
-
-    function actualizarInterfaz() {
-        console.log('Actualizando interfaz...');
-        const cantidadSeleccionados = asientosSeleccionados.length;
-        const porcentaje = (cantidadSeleccionados / cantidadPasajeros) * 100;
-        
-        console.log('Cantidad seleccionados:', cantidadSeleccionados);
-        console.log('Porcentaje:', porcentaje);
-        
-        // Actualizar progreso
-        if (progresoTexto) {
-            progresoTexto.textContent = `${cantidadSeleccionados}/${cantidadPasajeros}`;
-        }
-        if (progresoBar) {
-            progresoBar.style.width = `${porcentaje}%`;
-        }
-        
-        // Actualizar asientos seleccionados
-        if (asientosContainer) {
-            if (cantidadSeleccionados === 0) {
-                asientosContainer.textContent = 'Ninguno';
-            } else {
-                asientosContainer.textContent = asientosSeleccionados
-                    .map(a => `${a.fila}${a.columna}`)
-                    .join(', ');
-            }
-        }
-        
-        // Calcular precio total
-        const precioExtraTotal = asientosSeleccionados.reduce((sum, a) => sum + a.precio, 0);
-        const total = precioBase + precioExtraTotal;
-        
-        console.log('Precio extra total:', precioExtraTotal);
-        console.log('Total:', total);
-        
-        // Actualizar precios
-        if (precioTotal) {
-            precioTotal.textContent = `$${total.toLocaleString()}`;
-        }
-        if (totalDisplay) {
-            totalDisplay.textContent = `$${total.toLocaleString()}`;
-        }
-        
-        if (precioExtraContainer && precioExtra) {
-            if (precioExtraTotal > 0) {
-                precioExtraContainer.style.display = 'flex';
-                precioExtra.textContent = `$${precioExtraTotal.toLocaleString()}`;
-            } else {
-                precioExtraContainer.style.display = 'none';
-            }
-        }
-        
-        // Actualizar mensaje y botones
-        if (mensajeSeleccion) {
-            if (cantidadSeleccionados === cantidadPasajeros) {
-                mensajeSeleccion.className = 'alert alert-success';
-                mensajeSeleccion.innerHTML = '<i class="bi bi-check-circle me-2"></i>¡Perfecto! Puedes continuar';
-                if (btnContinuar) btnContinuar.disabled = false;
-                if (btnContinuarFooter) btnContinuarFooter.disabled = false;
-            } else {
-                const faltan = cantidadPasajeros - cantidadSeleccionados;
-                mensajeSeleccion.className = 'alert alert-warning';
-                mensajeSeleccion.innerHTML = `<i class="bi bi-info-circle me-2"></i>Selecciona ${faltan} asiento${faltan > 1 ? 's' : ''} más`;
-                if (btnContinuar) btnContinuar.disabled = true;
-                if (btnContinuarFooter) btnContinuarFooter.disabled = true;
-            }
-        }
-        
-        // Actualizar input hidden
-        if (asientosInput) {
-            asientosInput.value = JSON.stringify(asientosSeleccionados.map(a => a.id));
-        }
-        
-        console.log('Interfaz actualizada');
-    }
-
-    // Validación del formulario
-    const formAsientos = document.getElementById('form-asientos');
-    if (formAsientos) {
-        formAsientos.addEventListener('submit', function(e) {
-            if (asientosSeleccionados.length !== cantidadPasajeros) {
-                e.preventDefault();
-                alert(`Debes seleccionar exactamente ${cantidadPasajeros} asiento${cantidadPasajeros > 1 ? 's' : ''}.`);
-            }
-        });
-    }
-
-    // Inicializar interfaz
+    // Inicializar la interfaz
     actualizarInterfaz();
     
     console.log('Sistema de selección de asientos inicializado correctamente');

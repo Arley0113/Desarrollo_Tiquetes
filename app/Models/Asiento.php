@@ -19,8 +19,11 @@ class Asiento extends Model
         'columna',
         'tipo_asiento',
         'estado',
+        'precio_adicional',
         'id_avion'
     ];
+    
+    protected $appends = ['numero_completo'];
 
     protected $casts = [
         'fila' => 'integer',
@@ -49,7 +52,15 @@ class Asiento extends Model
     {
         return $this->hasMany(Tiquete::class, 'id_asiento', 'id_asiento');
     }
-
+    
+    /**
+     * Scope para ordenar asientos por fila y columna
+     */
+    public function scopeOrdenados($query)
+    {
+        return $query->orderBy('fila')->orderBy('columna');
+    }
+    
     /**
      * Obtener el número completo del asiento (ej: 1A, 12F)
      */
@@ -133,13 +144,5 @@ class Asiento extends Model
     public function scopePorAvion($query, $idAvion)
     {
         return $query->where('id_avion', $idAvion);
-    }
-
-    /**
-     * Scope para ordenar por fila y columna
-     */
-    public function scopeOrdenados($query)
-    {
-        return $query->orderBy('fila')->orderBy('columna');
     }
 }

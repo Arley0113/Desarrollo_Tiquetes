@@ -85,37 +85,41 @@
                                 </div>
 
                                 <!-- Solo mostrar las primeras 5 filas para simplificar -->
-                                @for($fila = 1; $fila <= 5; $fila++)
-                                <div class="seat-row">
-                                    <div class="seat-row-number">{{ $fila }}</div>
-                                    @for($col = 0; $col < 6; $col++)
-                                        @php
-                                            $letra = chr(65 + $col); // A, B, C, D, E, F
-                                            $asiento = $asientos->get($fila)->where('columna', $letra)->first();
-                                        @endphp
-                                        @if($asiento)
-                                            <div class="seat-container">
-                                                <button type="button" 
-                                                        class="seat-btn {{ $asiento->estado }}"
-                                                        data-asiento-id="{{ $asiento->id_asiento }}"
-                                                        data-fila="{{ $asiento->fila }}"
-                                                        data-columna="{{ $asiento->columna }}"
-                                                        data-precio="{{ $asiento->precio_adicional }}"
-                                                        @if($asiento->estado === 'ocupado') disabled @endif>
-                                                    @if($asiento->estado === 'ocupado')
-                                                        <i class="bi bi-x"></i>
-                                                    @else
-                                                        {{ $asiento->fila }}{{ $asiento->columna }}
-                                                    @endif
-                                                </button>
-                                            </div>
-                                        @else
-                                            <div class="seat-container">
-                                                <div class="seat-empty"></div>
-                                            </div>
-                                        @endif
-                                    @endfor
-                                </div>
+                                <!-- Solo mostrar las primeras 5 filas para simplificar -->
+@for($fila = 1; $fila <= 5; $fila++)
+    <div class="seat-row">
+        <div class="seat-row-number">{{ $fila }}</div>
+        @for($col = 0; $col < 6; $col++)
+            @php
+                $letra = chr(65 + $col); // A, B, C, D, E, F
+                // ✅ CORREGIDO: buscar asiento dentro del grupo de la fila
+                $asiento = isset($asientos[$fila]) 
+                    ? $asientos[$fila]->firstWhere('columna', $letra)
+                    : null;
+                        @endphp
+                                            @if($asiento)
+                                                <div class="seat-container">
+                                                    <button type="button" 
+                                                            class="seat-btn {{ $asiento->estado ?? 'disponible' }}"
+                                                            data-asiento-id="{{ $asiento->id_asiento }}"
+                                                            data-fila="{{ $asiento->fila }}"
+                                                            data-columna="{{ $asiento->columna }}"
+                                                            data-precio="{{ $asiento->precio_adicional ?? 0 }}"
+                                                            @if(($asiento->estado ?? '') === 'ocupado') disabled @endif>
+                                                        @if(($asiento->estado ?? '') === 'ocupado')
+                                                            <i class="bi bi-x"></i>
+                                                        @else
+                                                            {{ $asiento->fila }}{{ $asiento->columna }}
+                                                        @endif
+                                                    </button>
+                                                </div>
+                                            @else
+                                                <div class="seat-container">
+                                                    <div class="seat-empty"></div>
+                                                </div>
+                                            @endif
+                                        @endfor
+                                    </div>
                                 @endfor
                             </div>
                         </div>

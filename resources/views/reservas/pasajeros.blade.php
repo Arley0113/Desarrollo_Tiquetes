@@ -14,17 +14,17 @@
                             <div class="col-md-8">
                                 <h4 class="mb-2">
                                     <i class="bi bi-airplane me-2 text-primary"></i>
-                                    {{ $vuelo->origen->nombre }} → {{ $vuelo->destino->nombre }}
+                                    {{ $vuelo->origen->nombre_lugar }} → {{ $vuelo->destino->nombre_lugar }}
                                 </h4>
                                 <p class="text-muted mb-0">
                                     <i class="bi bi-calendar me-1"></i>
-                                    {{ \Carbon\Carbon::parse($vuelo->fecha_salida)->format('d/m/Y') }} 
+                                    {{ \Carbon\Carbon::parse($vuelo->fecha_vuelo)->format('d/m/Y') }} 
                                     <i class="bi bi-clock me-1 ms-3"></i>
-                                    {{ \Carbon\Carbon::parse($vuelo->hora_salida)->format('H:i') }}
+                                    {{ \Carbon\Carbon::parse($vuelo->hora)->format('H:i') }}
                                 </p>
                             </div>
                             <div class="col-md-4 text-end">
-                                <div class="h5 text-primary mb-0">${{ number_format($vuelo->precio->precio_base, 0, ',', '.') }}</div>
+                                <div class="h5 text-primary mb-0">${{ number_format($vuelo->precio->precio_ida, 0, ',', '.') }}</div>
                                 <small class="text-muted">Precio base</small>
                             </div>
                         </div>
