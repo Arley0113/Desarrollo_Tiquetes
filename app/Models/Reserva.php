@@ -17,7 +17,8 @@ class Reserva extends Model
         'numero_reserva',
         'fecha_reserva',
         'hora_reserva',
-        'id_usuario'
+        'id_usuario',
+        'id_vuelo'
     ];
 
     protected $casts = [
@@ -71,7 +72,7 @@ class Reserva extends Model
 
     // Reserva.php
 public function vuelo() {
-    return $this->belongsTo(Vuelo::class);
+    return $this->belongsTo(Vuelo::class, 'id_vuelo', 'id_vuelo');
 }
 
 public function pasajero() {

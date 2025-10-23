@@ -39,6 +39,7 @@ class ReservaService
                 'fecha_reserva' => now()->toDateString(),
                 'hora_reserva' => now()->toTimeString(),
                 'id_usuario' => $usuarioId, // Puede ser null para usuarios no autenticados
+                'id_vuelo' => $vueloId,
             ]);
 
             // Crear pasajeros
@@ -48,7 +49,7 @@ class ReservaService
                     'nombre_pasajero' => $pasajero['nombre'],
                     'documento' => $pasajero['documento'] ?? 'TEMP-' . uniqid(),
                     'es_acompanante' => $pasajero['acompanante'] ?? false,
-                    'id_asiento' => $asientosIds[$index] ?? null,
+                    // 'id_asiento' => $asientosIds[$index] ?? null, // no existe columna, se generan tiquetes con asientos seleccionados
                 ]);
             }
 

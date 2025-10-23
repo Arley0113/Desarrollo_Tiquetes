@@ -114,10 +114,10 @@ Route::middleware(['auth'])->prefix('reservas')->controller(ReservaController::c
 // =====================================================
 // 🔹 PAGOS (usuarios autenticados)
 // =====================================================
-Route::middleware(['auth'])->prefix('pagos')->controller(PagoController::class)->group(function () {
+Route::prefix('pagos')->controller(PagoController::class)->group(function () {
     Route::get('/', 'index')->name('pagos.index');
     Route::get('/crear/{reserva}', 'create')->name('pagos.create');
-    Route::post('/guardar', 'store')->name('pagos.store');
+    Route::post('/guardar/{reserva}', 'store')->name('pagos.store');
     Route::get('/ver/{id}', 'show')->name('pagos.show');
     Route::delete('/eliminar/{id}', 'destroy')->name('pagos.destroy');
 });

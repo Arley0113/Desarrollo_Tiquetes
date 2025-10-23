@@ -118,6 +118,19 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Robo
       <p class="hero-subtitle">Descubre el mundo con las mejores tarifas y una experiencia de reserva revolucionaria</p>
     </div>
 
+    <!-- Validation Errors -->
+    @if ($errors->any())
+      <div class="container" style="max-width:800px;margin:0 auto 1rem;">
+        <div class="alert alert-danger" role="alert" style="border-radius:12px;">
+          <ul class="mb-0">
+            @foreach ($errors->all() as $error)
+              <li>{{ $error }}</li>
+            @endforeach
+          </ul>
+        </div>
+      </div>
+    @endif
+
     <!-- Search Form -->
     <div class="search-container">
       <form method="GET" action="{{ route('vuelos.buscar') }}" class="search-form">
@@ -125,11 +138,11 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Robo
         <div class="trip-type-container">
           <div class="trip-type-options">
             <label class="trip-type-option">
-              <input type="radio" name="tipo_viaje" value="ida" checked>
+              <input type="radio" name="tipo_viaje" value="ida" {{ old('tipo_viaje', 'ida') === 'ida' ? 'checked' : '' }}>
               <span class="trip-type-label">Solo Ida</span>
             </label>
             <label class="trip-type-option">
-              <input type="radio" name="tipo_viaje" value="ida_regreso">
+              <input type="radio" name="tipo_viaje" value="ida_regreso" {{ old('tipo_viaje') === 'ida_regreso' ? 'checked' : '' }}>
               <span class="trip-type-label">Ida y Regreso</span>
             </label>
           </div>
@@ -141,7 +154,8 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Robo
             <select name="origen" class="form-input" required>
               <option value="">¿De dónde partes?</option>
               @foreach($lugares as $lugar)
-                <option value="{{ is_array($lugar) ? $lugar['id_lugar'] : $lugar->id_lugar }}">
+                @php $val = is_array($lugar) ? $lugar['id_lugar'] : $lugar->id_lugar; @endphp
+                <option value="{{ $val }}" {{ old('origen') == $val ? 'selected' : '' }}>
                   {{ is_array($lugar) ? $lugar['nombre_lugar'] : $lugar->nombre_lugar }}
                 </option>
               @endforeach
@@ -153,7 +167,8 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Robo
             <select name="destino" class="form-input" required>
               <option value="">¿A dónde viajas?</option>
               @foreach($lugares as $lugar)
-                <option value="{{ is_array($lugar) ? $lugar['id_lugar'] : $lugar->id_lugar }}">
+                @php $val = is_array($lugar) ? $lugar['id_lugar'] : $lugar->id_lugar; @endphp
+                <option value="{{ $val }}" {{ old('destino') == $val ? 'selected' : '' }}>
                   {{ is_array($lugar) ? $lugar['nombre_lugar'] : $lugar->nombre_lugar }}
                 </option>
               @endforeach
@@ -162,12 +177,12 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Robo
 
           <div class="input-group">
             <i class="bi bi-calendar input-icon"></i>
-            <input type="date" name="fecha" class="form-input" required min="{{ date('Y-m-d') }}" placeholder="Fecha de ida">
+            <input type="date" name="fecha" class="form-input" required min="{{ date('Y-m-d') }}" placeholder="Fecha de ida" value="{{ old('fecha') }}">
           </div>
 
           <div class="input-group" id="fecha-regreso-group" style="display: none;">
             <i class="bi bi-calendar-check input-icon"></i>
-            <input type="date" name="fecha_regreso" class="form-input" min="{{ date('Y-m-d') }}" placeholder="Fecha de regreso">
+            <input type="date" name="fecha_regreso" class="form-input" min="{{ date('Y-m-d') }}" placeholder="Fecha de regreso" value="{{ old('fecha_regreso') }}">
           </div>
 
           <button type="submit" class="search-btn">
@@ -307,11 +322,14 @@ document.addEventListener('DOMContentLoaded', function() {
       fechaRegresoGroup.style.display = 'block';
       searchInputs.classList.add('with-return');
       fechaRegresoInput.required = true;
+      if (fechaIdaInput && fechaIdaInput.value) {
+        fechaRegresoInput.min = fechaIdaInput.value;
+      }
     } else {
       fechaRegresoGroup.style.display = 'none';
       searchInputs.classList.remove('with-return');
       fechaRegresoInput.required = false;
-      fechaRegresoInput.value = '';
+      // No limpiamos el value para preservar old() cuando hay errores
     }
   }
 

@@ -387,113 +387,121 @@
 // Variables globales
 const asientosSeleccionados = [];
 const cantidadPasajeros = {{ $cantidadPasajeros }};
-const precioBase = {{ $vuelo->precio->precio_base }};
+const precioBase = {{ $vuelo->precio->precio_ida ?? 0 }};
 
-// Función para seleccionar/deseleccionar asientos
+// Formatear moneda COP
+function formatearCOP(valor) {
+    try {
+        return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(Number(valor || 0));
+    } catch (_) {
+        return '$' + Math.round(Number(valor || 0)).toLocaleString('es-CO');
+    }
+}
+
+// Seleccionar/deseleccionar asiento
 function seleccionarAsiento(btn) {
+    if (btn.classList.contains('ocupado')) return false;
+
     const asientoId = btn.getAttribute('data-asiento-id');
     const fila = btn.getAttribute('data-fila');
     const columna = btn.getAttribute('data-columna');
     const tipo = btn.getAttribute('data-tipo') || 'normal';
     const precio = parseFloat(btn.getAttribute('data-precio')) || 0;
-    
-    console.log('Click en asiento:', fila + columna);
-    
-    // Verificar si el asiento ya está seleccionado
-    if (btn.classList.contains('seleccionado')) {
-        // Deseleccionar
+
+    const idx = asientosSeleccionados.findIndex(a => a.id === asientoId);
+
+    if (btn.classList.contains('seleccionado') || idx > -1) {
         btn.classList.remove('seleccionado');
         btn.classList.add('disponible');
-        
-        // Eliminar de la lista
-        const index = asientosSeleccionados.findIndex(a => a.id === asientoId);
-        if (index > -1) {
-            asientosSeleccionados.splice(index, 1);
-        }
+        if (idx > -1) asientosSeleccionados.splice(idx, 1);
     } else {
-        // Si ya se alcanzó el límite, deseleccionar el primero
         if (asientosSeleccionados.length >= cantidadPasajeros) {
-            const primerAsiento = asientosSeleccionados[0];
-            const primerBtn = document.querySelector(`.seat-btn[data-asiento-id="${primerAsiento.id}"]`);
-            if (primerBtn) {
-                primerBtn.classList.remove('seleccionado');
-                primerBtn.classList.add('disponible');
+            const primero = asientosSeleccionados.shift();
+            const primeroBtn = document.querySelector(`.seat-btn[data-asiento-id="${primero.id}"]`);
+            if (primeroBtn) {
+                primeroBtn.classList.remove('seleccionado');
+                primeroBtn.classList.add('disponible');
             }
-            asientosSeleccionados.shift();
         }
-        
-        // Seleccionar el nuevo
+
         btn.classList.remove('disponible');
         btn.classList.add('seleccionado');
-        
-        // Añadir a la lista
-        asientosSeleccionados.push({
-            id: asientoId,
-            fila: fila,
-            columna: columna,
-            tipo: tipo,
-            precio: precio
-        });
+        asientosSeleccionados.push({ id: asientoId, fila, columna, tipo, precio });
     }
-    
-    // Actualizar la interfaz
+
     actualizarInterfaz();
-    
-    return false; // Prevenir comportamiento por defecto
+    return false;
 }
 
-// Función para actualizar la interfaz con los asientos seleccionados
 function actualizarInterfaz() {
-    // Actualizar lista de asientos seleccionados
-    const listaAsientos = document.getElementById('lista-asientos-seleccionados');
-    listaAsientos.innerHTML = '';
-    
-    // Calcular precio total
-    let precioTotal = cantidadPasajeros * precioBase;
-    
-    // Mostrar asientos seleccionados
-    asientosSeleccionados.forEach(asiento => {
-        const li = document.createElement('li');
-        li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        li.innerHTML = `
-            <span>Asiento ${asiento.fila}${asiento.columna} (${asiento.tipo})</span>
-            <span>+$${asiento.precio.toFixed(2)}</span>
-        `;
-        listaAsientos.appendChild(li);
-        
-        // Sumar al precio total
-        precioTotal += parseFloat(asiento.precio);
-    });
-    
-    // Actualizar contador de asientos
-    document.getElementById('contador-asientos').textContent = `${asientosSeleccionados.length}/${cantidadPasajeros}`;
-    
-    // Actualizar precio total
-    document.getElementById('precio-total').textContent = `$${precioTotal.toFixed(2)}`;
-    
-    // Actualizar campo oculto con los IDs de asientos
-    const asientosInput = document.getElementById('asientos_seleccionados');
-    asientosInput.value = asientosSeleccionados.map(a => a.id).join(',');
-    
-    // Habilitar/deshabilitar botón continuar
+    const contAsientos = document.getElementById('asientos-seleccionados');
+    const progresoTexto = document.getElementById('progreso-texto');
+    const progresoBar = document.getElementById('progreso-bar');
+    const precioExtraContainer = document.getElementById('precio-extra-container');
+    const precioExtraEl = document.getElementById('precio-extra');
+    const precioTotalEl = document.getElementById('precio-total');
+    const totalDisplayEl = document.getElementById('total-display');
+    const mensajeSel = document.getElementById('mensaje-seleccion');
+    const inputAsientos = document.getElementById('asientos-input');
     const btnContinuar = document.getElementById('btn-continuar');
-    if (asientosSeleccionados.length === cantidadPasajeros) {
-        btnContinuar.disabled = false;
-        btnContinuar.classList.remove('disabled');
-    } else {
-        btnContinuar.disabled = true;
-        btnContinuar.classList.add('disabled');
+    const btnContinuarFooter = document.getElementById('btn-continuar-footer');
+    const precioBaseEl = document.getElementById('precio-base');
+
+    if (precioBaseEl) precioBaseEl.textContent = formatearCOP(precioBase);
+
+    let extras = 0;
+
+    if (contAsientos) {
+        contAsientos.innerHTML = '';
+        if (asientosSeleccionados.length === 0) {
+            contAsientos.textContent = 'Ninguno';
+        } else {
+            const frag = document.createDocumentFragment();
+            asientosSeleccionados.forEach(a => {
+                const div = document.createElement('div');
+                div.className = 'd-flex justify-content-between align-items-center mb-1';
+                const tipoTxt = a.tipo ? ` (${a.tipo})` : '';
+                div.innerHTML = `<span>Asiento ${a.fila}${a.columna}${tipoTxt}</span><span>+${formatearCOP(a.precio)}</span>`;
+                frag.appendChild(div);
+                extras += Number(a.precio || 0);
+            });
+            contAsientos.appendChild(frag);
+        }
     }
+
+    const total = cantidadPasajeros * Number(precioBase || 0) + extras;
+
+    if (precioExtraContainer && precioExtraEl) {
+        if (extras > 0) {
+            precioExtraContainer.style.display = '';
+            precioExtraEl.textContent = formatearCOP(extras);
+        } else {
+            precioExtraContainer.style.display = 'none';
+            precioExtraEl.textContent = formatearCOP(0);
+        }
+    }
+
+    if (precioTotalEl) precioTotalEl.textContent = formatearCOP(total);
+    if (totalDisplayEl) totalDisplayEl.textContent = formatearCOP(total);
+
+    if (progresoTexto && progresoBar) {
+        progresoTexto.textContent = `${asientosSeleccionados.length}/${cantidadPasajeros}`;
+        const pct = Math.min(100, (asientosSeleccionados.length / cantidadPasajeros) * 100);
+        progresoBar.style.width = `${pct}%`;
+    }
+
+    if (mensajeSel) {
+        const faltan = Math.max(0, cantidadPasajeros - asientosSeleccionados.length);
+        mensajeSel.innerHTML = `<i class="bi bi-info-circle me-2"></i>Selecciona ${faltan} asiento${faltan === 1 ? '' : 's'} más`;
+    }
+
+    if (inputAsientos) inputAsientos.value = JSON.stringify(asientosSeleccionados.map(a => a.id));
+
+    const completos = asientosSeleccionados.length === cantidadPasajeros;
+    if (btnContinuar) btnContinuar.disabled = !completos;
+    if (btnContinuarFooter) btnContinuarFooter.disabled = !completos;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Sistema de selección de asientos inicializando');
-    console.log('Pasajeros:', cantidadPasajeros, 'Precio base:', precioBase);
-    
-    // Inicializar la interfaz
-    actualizarInterfaz();
-    
-    console.log('Sistema de selección de asientos inicializado correctamente');
-});
+document.addEventListener('DOMContentLoaded', actualizarInterfaz);
 </script>
 @endpush

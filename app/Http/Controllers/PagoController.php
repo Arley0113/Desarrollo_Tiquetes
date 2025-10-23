@@ -17,7 +17,13 @@ class PagoController extends Controller
 
     public function create($id_reserva)
     {
-        $reserva = Reserva::with('vuelo.precio')->findOrFail($id_reserva);
+        $reserva = Reserva::with(['vuelo.origen', 'vuelo.destino', 'vuelo.precio'])->findOrFail($id_reserva);
+        if (!$reserva->vuelo) {
+            \Log::warning('Reserva sin vuelo al cargar pagos.create', [
+                'id_reserva' => $id_reserva,
+                'id_vuelo' => $reserva->id_vuelo ?? null,
+            ]);
+        }
         return view('pagos.create', compact('reserva'));
     }
 

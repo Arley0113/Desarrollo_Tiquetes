@@ -12,18 +12,18 @@
                 <small class="text-muted">{{ $vuelo->codigo_vuelo }}</small>
             </div>
             <div class="text-center">
-                <h6 class="fw-bold">{{ date('H:i', strtotime($vuelo->hora_salida)) }}</h6>
+                <h6 class="fw-bold">{{ date('H:i', strtotime($vuelo->hora)) }}</h6>
                 <small>{{ $origen->nombre_lugar }}</small>
             </div>
             <div class="text-center">
                 <small>{{ $vuelo->duracion }}</small>
             </div>
             <div class="text-center">
-                <h6 class="fw-bold">{{ date('H:i', strtotime($vuelo->hora_llegada)) }}</h6>
+                <h6 class="fw-bold">{{ date('H:i', strtotime($vuelo->hora_llegada ?? $vuelo->hora)) }}</h6>
                 <small>{{ $destino->nombre_lugar }}</small>
             </div>
             <div class="text-end">
-                <h5 class="fw-bold text-primary">${{ number_format($vuelo->precio->valor ?? 0, 0, ',', '.') }}</h5>
+                <h5 class="fw-bold text-primary">${{ number_format($vuelo->precio->precio_ida ?? 0, 0, ',', '.') }}</h5>
             </div>
         </div>
         <p><strong>Comodidades:</strong> 

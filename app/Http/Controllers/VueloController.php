@@ -23,7 +23,7 @@ class VueloController extends Controller
         'destino' => 'required',
         'fecha' => 'required|date',
         'tipo_viaje' => 'required|in:ida,ida_regreso',
-        'fecha_regreso' => 'required_if:tipo_viaje,ida_regreso|date|after:fecha'
+        'fecha_regreso' => 'nullable|required_if:tipo_viaje,ida_regreso|date|after:fecha'
     ]);
 
     // Buscar vuelos de ida para la fecha específica
